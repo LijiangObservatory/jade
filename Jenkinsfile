@@ -5,9 +5,17 @@
 pipeline {
 	agent any
 	stages {
+		stage('Push image') {
+			steps {
+				sh 'mvn compile jib:build'
+			}
+		}
 		stage('Deploy snapshot') {
 			steps {
-				sh 'mvn versions:set -DnewVersion=${GIT_BRANCH//\\//-}-SNAPSHOT && mvn deploy'
+				sh '''
+					mvn versions:set -DnewVersion=${GIT_BRANCH//\\//-}-SNAPSHOT
+					mvn deploy
+				'''
 			}
 		}
 		stage('Deploy release') {
@@ -15,7 +23,10 @@ pipeline {
 				buildingTag()
 			}
 			steps {
-				sh 'mvn versions:set -DnewVersion=$(git describe) && mvn deploy'
+				sh '''
+					mvn versions:set -DnewVersion=$(git describe)
+					mvn deploy
+				'''
 			}
 		}
 	}
