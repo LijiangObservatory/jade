@@ -1,87 +1,80 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
-    <modelVersion>4.0.0</modelVersion>
-    <groupId>com.tilab.jade</groupId>
-    <artifactId>jade</artifactId>
-    <packaging>jar</packaging>
-    <version>4.5.1-SNAPSHOT</version>
-    <name>jade</name>
-    <url>http://jade.tilab.com/</url>
-
-    <parent>
-        <artifactId>lcogt-pom</artifactId>
-        <groupId>org.lcogt</groupId>
-        <version>0.5.0-SNAPSHOT</version>
-    </parent>
-
-    <scm>
-        <connection>scm:svn:http://versionsba/svn/telsoft/thirdparty/tilab/jade/branches/4.2.0-x</connection>
-        <developerConnection>scm:svn:http://versionsba/svn/telsoft/thirdparty/tilab/jade/branches/4.2.0-x
-        </developerConnection>
-        <url>http://versionsba/svn/telsoft/thirdparty/tilab/jade</url>
-    </scm>
-
-    <dependencies>
-        <dependency>
-            <groupId>commons-codec</groupId>
-            <artifactId>commons-codec</artifactId>
-            <version>1.3</version>
-        </dependency>
-    </dependencies>
-
-    <!-- Compiler configuration. There are images in the src directory that
-       must be included as resources. -->
-    <build>
-        <defaultGoal>install</defaultGoal>
-        <sourceDirectory>src/main/java</sourceDirectory>
-        <resources>
-            <resource>
-                <directory>src/main/java</directory>
-            </resource>
-        </resources>
-        <plugins>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>buildnumber-maven-plugin</artifactId>
-                <version>1.0</version>
-                <executions>
-                    <execution>
-                        <phase>validate</phase>
-                        <goals>
-                            <goal>create</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <timestampFormat>{0,date,dd-MM-yyyy HH:mm:ss}</timestampFormat>
-                    <doCheck>false</doCheck>
-                    <doUpdate>false</doUpdate>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <version>2.6</version>
-                <configuration>
-                    <archive>
-                        <index>true</index>
-                        <manifest>
-                            <addClasspath>true</addClasspath>
-                        </manifest>
-                        <manifestSections>
-                            <manifestSection>
-                                <name>Jade Informations</name>
-                                <manifestEntries>
-                                    <Specification-Version>${project.version}</Specification-Version>
-                                    <SVN-Revision>${buildNumber}</SVN-Revision>
-                                    <SVN-Date>${timestamp}</SVN-Date>
-                                </manifestEntries>
-                            </manifestSection>
-                        </manifestSections>
-                    </archive>
-                </configuration>
-            </plugin>
-        </plugins>
-    </build>
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.tilab.jade</groupId>
+  <artifactId>jade</artifactId>
+  <packaging>jar</packaging>
+  <version>dev-SNAPSHOT</version>
+  <name>jade</name>
+  <url>http://jade.tilab.com/</url>
+  <parent>
+    <groupId>org.lcogt</groupId>
+    <artifactId>lcogt-pom</artifactId>
+    <version>0.6.0</version>
+  </parent>
+  <dependencies>
+    <dependency>
+      <groupId>commons-codec</groupId>
+      <artifactId>commons-codec</artifactId>
+      <version>1.3</version>
+    </dependency>
+  </dependencies>
+  <!-- Compiler configuration. There are images in the src directory that
+     must be included as resources. -->
+  <build>
+    <defaultGoal>install</defaultGoal>
+    <sourceDirectory>src/main/java</sourceDirectory>
+    <resources>
+      <resource>
+        <directory>src/main/java</directory>
+      </resource>
+    </resources>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-jar-plugin</artifactId>
+        <version>2.6</version>
+        <configuration>
+          <archive>
+            <index>true</index>
+            <manifest>
+              <addClasspath>true</addClasspath>
+            </manifest>
+            <manifestSections>
+              <manifestSection>
+                <name>Jade Informations</name>
+                <manifestEntries>
+                  <Specification-Version>${project.version}</Specification-Version>
+                  <Git-describe>${git.commit.id.describe}</Git-describe>
+                  <Build-time>${git.build.time}</Build-time>
+                </manifestEntries>
+              </manifestSection>
+            </manifestSections>
+          </archive>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>com.google.cloud.tools</groupId>
+        <artifactId>jib-maven-plugin</artifactId>
+        <version>1.0.2</version>
+        <configuration>
+          <!-- The cert used by LCO for the Docker registry isn't in Java -->
+          <allowInsecureRegistries>true</allowInsecureRegistries>
+          <to>
+            <image>docker.lco.global/site-software/jade-platform-node</image>
+            <tags>${git.commit.id.describe}</tags>
+          </to>
+          <from>
+            <image>gcr.io/distroless/java:8</image>
+          </from>
+          <container>
+            <environment>
+            </environment>
+            <mainClass>jade.Boot</mainClass>
+          </container>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 </project>
