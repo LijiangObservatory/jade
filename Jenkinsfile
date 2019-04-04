@@ -5,9 +5,17 @@
 pipeline {
 	agent any
 	stages {
-		stage('Deploy') {
+		stage('Deploy snapshot') {
 			steps {
-				sh 'mvn clean deploy'
+				sh 'mvn -DnewVersion=${GIT_BRANCH} && mvn deploy'
+			}
+		}
+		stage('Deploy release') {
+			when {
+				buildingTag()
+			}
+			steps {
+				sh 'mvn -DnewVersion=$(git describe) && mvn deploy'
 			}
 		}
 	}
