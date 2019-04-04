@@ -7,7 +7,7 @@ pipeline {
 	stages {
 		stage('Deploy snapshot') {
 			steps {
-				sh 'mvn -DnewVersion=${GIT_BRANCH} && mvn deploy'
+				sh 'mvn versions:set -DnewVersion=${GIT_BRANCH//\\//-}-SNAPSHOT && mvn deploy'
 			}
 		}
 		stage('Deploy release') {
@@ -15,7 +15,7 @@ pipeline {
 				buildingTag()
 			}
 			steps {
-				sh 'mvn -DnewVersion=$(git describe) && mvn deploy'
+				sh 'mvn versions:set -DnewVersion=$(git describe) && mvn deploy'
 			}
 		}
 	}
