@@ -62,7 +62,7 @@
           <!-- The cert used by LCO for the Docker registry isn't in Java -->
           <allowInsecureRegistries>true</allowInsecureRegistries>
           <to>
-            <image>docker.lco.global/site-software/jade-platform-node</image>
+            <image>docker.lco.global/jade</image>
             <tags>${git.commit.id.describe}</tags>
           </to>
           <from>
