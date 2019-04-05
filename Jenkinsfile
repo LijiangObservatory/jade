@@ -11,6 +11,9 @@ pipeline {
 			}
 		}
 		stage('Deploy snapshot') {
+			when {
+				not { buildingTag() }
+			}
 			steps {
 				sh '''
 					mvn versions:set -DnewVersion=${GIT_BRANCH//\\//-}-SNAPSHOT
@@ -19,9 +22,7 @@ pipeline {
 			}
 		}
 		stage('Deploy release') {
-			when {
-				buildingTag()
-			}
+			when { buildingTag() }
 			steps {
 				sh '''
 					mvn versions:set -DnewVersion=$(git describe)
