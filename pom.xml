@@ -8,6 +8,9 @@
   <version>dev-SNAPSHOT</version>
   <name>jade</name>
   <url>http://jade.tilab.com/</url>
+  <scm>
+    <connection>scm:git:ssh://git@github.com:LCOGT/jade.git</connection>
+  </scm>
   <parent>
     <groupId>org.lcogt</groupId>
     <artifactId>lcogt-pom</artifactId>
@@ -57,12 +60,12 @@
       <plugin>
         <groupId>com.google.cloud.tools</groupId>
         <artifactId>jib-maven-plugin</artifactId>
-        <version>1.0.2</version>
+        <version>1.4.0</version>
         <configuration>
           <!-- The cert used by LCO for the Docker registry isn't in Java -->
           <allowInsecureRegistries>true</allowInsecureRegistries>
           <to>
-            <image>docker.lco.global/jade</image>
+            <image>docker.lco.global/jade-platform-node</image>
             <tags>${git.commit.id.describe}</tags>
           </to>
           <from>
