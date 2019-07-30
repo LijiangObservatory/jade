@@ -5,29 +5,21 @@
 pipeline {
 	agent any
 	stages {
-		stage('Push image') {
+		stage('Build') {
 			steps {
-				sh 'mvn compile jib:build'
+				sh 'mvn compile'
 			}
 		}
-		stage('Deploy snapshot') {
-			when {
-				not { buildingTag() }
-			}
-			steps {
-				sh '''
-					mvn versions:set -DnewVersion=${GIT_BRANCH//\\//-}-SNAPSHOT
-					mvn deploy
-				'''
-			}
-		}
-		stage('Deploy release') {
+		stage('Update pom.xml version ') {
 			when { buildingTag() }
 			steps {
-				sh '''
-					mvn versions:set -DnewVersion=$(git describe)
-					mvn deploy
-				'''
+				// TODO: Get the current git tag and update the pom.xml
+				sh ':'
+			}
+		}
+		stage('Deploy') {
+			steps {
+				sh 'mvn deploy'
 			}
 		}
 	}
