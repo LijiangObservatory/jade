@@ -4,7 +4,7 @@
   <groupId>com.tilab.jade</groupId>
   <artifactId>jade</artifactId>
   <packaging>jar</packaging>
-  <version>4.5.3-SNAPSHOT</version>
+  <version>4.5.1-1</version>
   <name>jade</name>
   <url>http://jade.tilab.com/</url>
   <scm>
@@ -13,7 +13,7 @@
   <parent>
     <groupId>org.lcogt</groupId>
     <artifactId>lcogt-pom</artifactId>
-    <version>0.6.0</version>
+    <version>0.7.0</version>
   </parent>
   <dependencies>
     <dependency>
