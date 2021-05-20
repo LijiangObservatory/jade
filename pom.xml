@@ -4,7 +4,7 @@
   <groupId>com.tilab.jade</groupId>
   <artifactId>jade</artifactId>
   <packaging>jar</packaging>
-  <version>4.5.1-1</version>
+  <version>4.5.1-2</version>
   <name>jade</name>
   <url>http://jade.tilab.com/</url>
   <scm>
@@ -13,13 +13,13 @@
   <parent>
     <groupId>org.lcogt</groupId>
     <artifactId>lcogt-pom</artifactId>
-    <version>0.7.0</version>
+    <version>0.7.7</version>
   </parent>
   <dependencies>
     <dependency>
       <groupId>commons-codec</groupId>
       <artifactId>commons-codec</artifactId>
-      <version>1.3</version>
+      <version>1.15</version>
     </dependency>
   </dependencies>
   <!-- Compiler configuration. There are images in the src directory that
@@ -59,7 +59,7 @@
       <plugin>
         <groupId>com.google.cloud.tools</groupId>
         <artifactId>jib-maven-plugin</artifactId>
-        <version>1.4.0</version>
+        <version>1.8.0</version>
         <executions>
           <execution>
             <phase>deploy</phase>

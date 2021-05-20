@@ -163,6 +163,10 @@ public class TopicManagementService extends BaseService {
 							sendMessage(sender, gMsg, target);
 						}
 					}
+					else
+					{
+						myLogger.log(Logger.WARNING, "No interested agents found for topic " + topic.getLocalName());
+					}
 					// Veto the original SEND_MESSAGE command
 					return false;
 				}
