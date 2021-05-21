@@ -265,7 +265,7 @@ public class TopicManagementService extends BaseService {
 				{
 					TopicRegistration reg = (TopicRegistration) registration;
 					myLogger.log(Logger.WARNING, "New Slice: Propagating registration of agent " + reg.getAID().getName() + " topic " +
-							reg.getTopic().getLocalName() + " to slice " + newSlice);
+							reg.getTopic().getLocalName() + " to slice " + newSlice.getNode().getName());
 					newSlice.register(reg.getAID(), reg.getTopic());
 				}
 			}
@@ -292,7 +292,7 @@ public class TopicManagementService extends BaseService {
 					try
 					{
 						myLogger.log(Logger.WARNING, "Broadcast: Propagating registration of agent " + aid.getName() + " topic " +
-								reg.getTopic().getLocalName() + " to slice " + newSlice);
+								reg.getTopic().getLocalName() + " to slice " + newSlice.getNode().getName());
 						newSlice.register(aid, reg.getTopic());
 					}
 					catch (Exception e)
