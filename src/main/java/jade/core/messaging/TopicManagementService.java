@@ -263,9 +263,10 @@ public class TopicManagementService extends BaseService {
 				// Be sure to get the new (fresh) slice --> Bypass the service cache
 				TopicManagementSlice newSlice = (TopicManagementSlice) getFreshSlice(newSliceName);
 				List registrations = topicTable.getAllRegistrations();
-				Iterator it = registrations.iterator();
-				while (it.hasNext()) {
-					TopicRegistration reg = (TopicRegistration) it.next();
+				for (Object registration : registrations)
+				{
+					TopicRegistration reg = (TopicRegistration) registration;
+					myLogger.log(Logger.WARNING, "Notifying new slice " + newSliceName + " about topic " + reg.getTopic().getLocalName());
 					newSlice.register(reg.getAID(), reg.getTopic());
 				}
 			}
