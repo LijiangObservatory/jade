@@ -61,7 +61,7 @@ public class TopicManagementProxy extends SliceProxy implements TopicManagementS
 			}
 			else
 			{
-				myLogger.log(Level.WARNING, "Register topic " + topic.getLocalName() + " with " + n.getName() + ". Replied with " + result);
+				//myLogger.log(Level.WARNING, "Register topic " + topic.getLocalName() + " with " + n.getName() + ". Replied with " + result);
 			}
 		}
 		catch(ServiceException se) {
