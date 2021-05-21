@@ -33,12 +33,16 @@ import jade.core.ServiceException;
 import jade.core.SliceProxy;
 import jade.core.IMTPException;
 
+import java.util.logging.Level;
+
 /**
  * Slice Proxy for the TopicManagementService
  * @author Giovanni Caire - Telecom Italia 
  */
 public class TopicManagementProxy extends SliceProxy implements TopicManagementSlice {
-	
+
+	protected transient jade.util.Logger myLogger = jade.util.Logger.getMyLogger("TopicManagementProxy");
+
 	public void register(AID aid, AID topic) throws IMTPException {
 		try {
 			GenericCommand cmd = new GenericCommand(H_REGISTER, TopicManagementService.NAME, null);
@@ -54,6 +58,10 @@ public class TopicManagementProxy extends SliceProxy implements TopicManagementS
 				else {
 					throw new IMTPException("An undeclared exception was thrown", (Throwable)result);
 				}
+			}
+			else if (result == null)
+			{
+				myLogger.log(Level.WARNING, "Attempt to register topic with proxy returned null for " + topic.getLocalName());
 			}
 		}
 		catch(ServiceException se) {
