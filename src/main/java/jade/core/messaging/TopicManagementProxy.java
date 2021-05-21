@@ -59,6 +59,10 @@ public class TopicManagementProxy extends SliceProxy implements TopicManagementS
 					throw new IMTPException("An undeclared exception was thrown", (Throwable)result);
 				}
 			}
+			else if (result != null)
+			{
+				myLogger.log(Level.WARNING, "Register topic " + topic.getLocalName() + " with " + n.getName() + ". Replied with " + result);
+			}
 			else if (result == null)
 			{
 				myLogger.log(Level.WARNING, "Attempt to register topic with proxy returned null for " + topic.getLocalName());
