@@ -39,6 +39,7 @@ import java.util.logging.Level;
  * Slice Proxy for the TopicManagementService
  * @author Giovanni Caire - Telecom Italia 
  */
+@SuppressWarnings("unused")
 public class TopicManagementProxy extends SliceProxy implements TopicManagementSlice {
 
 	protected transient jade.util.Logger myLogger = jade.util.Logger.getMyLogger("TopicManagementProxy");
@@ -61,7 +62,7 @@ public class TopicManagementProxy extends SliceProxy implements TopicManagementS
 			}
 			else
 			{
-				//myLogger.log(Level.WARNING, "Register topic " + topic.getLocalName() + " with " + n.getName() + ". Replied with " + result);
+				myLogger.log(Level.WARNING, "Register topic " + topic.getLocalName() + " with " + n.getName() + ". Replied with " + result);
 			}
 		}
 		catch(ServiceException se) {
@@ -77,7 +78,7 @@ public class TopicManagementProxy extends SliceProxy implements TopicManagementS
 			
 			Node n = getNode();
 			Object result = n.accept(cmd);
-			if((result != null) && (result instanceof Throwable)) {
+			if((result instanceof Throwable)) {
 				if(result instanceof IMTPException) {
 					throw (IMTPException)result;
 				}

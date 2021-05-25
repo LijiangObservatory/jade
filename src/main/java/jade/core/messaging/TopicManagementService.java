@@ -27,21 +27,17 @@ package jade.core.messaging;
 //#APIDOC_EXCLUDE_FILE
 
 import jade.core.*;
-import jade.core.messaging.MessagingService;
-import jade.core.messaging.MessagingSlice;
-import jade.core.messaging.GenericMessage;
 import jade.core.management.AgentManagementSlice;
 import jade.lang.acl.ACLMessage;
 import jade.util.Logger;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Iterator;
 
 /**
  * TopicManagement service main class
  * @author Giovanni Caire - TILAB
- */
+ **/
 public class TopicManagementService extends BaseService {
 	public static final String NAME = TopicManagementHelper.SERVICE_NAME;
 		
@@ -52,7 +48,7 @@ public class TopicManagementService extends BaseService {
 	private Filter outFilter;
 	private ServiceComponent localSlice;
 	
-	private TopicTable topicTable = new TopicTable();
+	private final TopicTable topicTable = new TopicTable();
 	private MessagingService theMessagingService;
 	private boolean shutdownInProgress = false;
 	
@@ -114,12 +110,8 @@ public class TopicManagementService extends BaseService {
 		return new TopicHelperImpl();
 	}
 	
-	
 	public String dump(String key) {
-		StringBuffer sb = new StringBuffer();
-		sb.append(topicTable.toString());
-		sb.append(super.dump(key));
-		return (sb.toString());
+		return (topicTable + super.dump(key));
 	}
 	
 	/**
@@ -143,29 +135,29 @@ public class TopicManagementService extends BaseService {
 				
 				if (TopicUtility.isTopic(receiver)) {
 					// This message is directed to a Topic
-					AID topic = receiver;
 					if (myLogger.isLoggable(Logger.FINE)) {
-						myLogger.log(Logger.FINE, "Handling message about topic "+topic.getLocalName());
+						myLogger.log(Logger.FINE, "Handling message about topic "+ receiver.getLocalName());
 					}
 					ACLMessage msg = gMsg.getACLMessage();
-					Collection interestedAgents = topicTable.getInterestedAgents(topic, msg);
+					Collection interestedAgents = topicTable.getInterestedAgents(receiver);
 					if (interestedAgents.size() > 0) {
 						// Forward the message to all agents interested in that topic.
 						// Note that if no agents are currently listening to this topic, the message is simply swallowed
 						msg.addUserDefinedParameter(ACLMessage.IGNORE_FAILURE, "true");
 						gMsg.setModifiable(false);
-						Iterator it = interestedAgents.iterator();
-						while (it.hasNext()) {
-							AID target = (AID) it.next();
-							if (myLogger.isLoggable(Logger.FINE)) {
-								myLogger.log(Logger.FINE, "Forwarding message to agent "+target.getName());
+						for (Object interestedAgent : interestedAgents)
+						{
+							AID target = (AID) interestedAgent;
+							if (myLogger.isLoggable(Logger.FINE))
+							{
+								myLogger.log(Logger.FINE, "Forwarding message to agent " + target.getName());
 							}
 							sendMessage(sender, gMsg, target);
 						}
 					}
 					else
 					{
-						myLogger.log(Logger.WARNING, "No interested agents found for topic " + topic.getLocalName());
+						myLogger.log(Logger.WARNING, "No interested agents found for topic " + receiver.getLocalName());
 					}
 					// Veto the original SEND_MESSAGE command
 					return false;
@@ -238,9 +230,9 @@ public class TopicManagementService extends BaseService {
 			if (topics.size() > 0) {
 				try {
 					Service.Slice[] slices = getAllSlices();
-					Iterator it = topics.iterator();
-					while (it.hasNext()) {
-						broadcastDeregistration(aid, (AID) it.next(), slices);
+					for (Object topic : topics)
+					{
+						broadcastDeregistration(aid, (AID) topic, slices);
 					}
 				}
 				catch (Throwable t) {
@@ -445,17 +437,21 @@ public class TopicManagementService extends BaseService {
 		if (myLogger.isLoggable(Logger.CONFIG)) {
 			myLogger.log(Logger.CONFIG, "Deregistering agent "+aid.getName()+" from topic "+topic.getLocalName());
 		}
-		for (int i = 0; i < slices.length; i++) {
+		for (Slice value : slices)
+		{
 			String sliceName = null;
-			try {
-				TopicManagementSlice slice = (TopicManagementSlice) slices[i];
+			try
+			{
+				TopicManagementSlice slice = (TopicManagementSlice) value;
 				sliceName = slice.getNode().getName();
-				if (myLogger.isLoggable(Logger.FINER)) {
-					myLogger.log(Logger.FINER, "Propagating deregistration of agent "+aid.getName()+" to slice "+sliceName);
+				if (myLogger.isLoggable(Logger.FINER))
+				{
+					myLogger.log(Logger.FINER, "Propagating deregistration of agent " + aid.getName() + " to slice " + sliceName);
 				}
 				slice.deregister(aid, topic);
 			}
-			catch(Throwable t) {
+			catch (Throwable t)
+			{
 				// NOTE that slices are always retrieved from the main and not from the cache --> No need to retry in case of failure 
 				myLogger.log(Logger.WARNING, "Error propagating topic de-registration to slice  " + sliceName, t);
 			}

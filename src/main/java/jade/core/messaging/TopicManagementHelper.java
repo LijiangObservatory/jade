@@ -35,15 +35,16 @@ import jade.core.ServiceException;
  * completely uniform.   
  * @author Giovanni Caire - TILAB
  */
+@SuppressWarnings("unused")
 public interface TopicManagementHelper extends ServiceHelper {
 	/**
 	 * This constant represents the name of the Topic Management Service and must be specified 
 	 * in the <code>getHelper()</code> method of the <code>Agent</code> class to retrieve the helper
 	 * of the local TopicManagementService.
 	 */
-	public static final String SERVICE_NAME = "jade.core.messaging.TopicManagement";
-	public static final String TOPIC_SUFFIX = "TOPIC_";
-	public static final String TOPIC_TEMPLATE_WILDCARD = "*";
+	String SERVICE_NAME = "jade.core.messaging.TopicManagement";
+	String TOPIC_SUFFIX = "TOPIC_";
+	String TOPIC_TEMPLATE_WILDCARD = "*";
 	 
 	/**
 	 * Create a topic with a given name.

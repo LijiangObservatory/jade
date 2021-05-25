@@ -36,8 +36,8 @@ import jade.core.Service;
 public interface TopicManagementSlice extends Service.Slice {
 	
 	// Horizontal commands
-	static final String H_REGISTER = "R";
-	static final String H_DEREGISTER = "D";
+	String H_REGISTER = "R";
+	String H_DEREGISTER = "D";
 	
 	void register(AID aid, AID topic) throws IMTPException;
 	
