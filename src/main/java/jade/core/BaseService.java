@@ -148,13 +148,15 @@ public abstract class BaseService implements Service {
 	public void broadcast(HorizontalCommand cmd, boolean includeMyself) throws IMTPException, ServiceException {
 		Service.Slice[] slices = myFinder.findAllSlices(getName());
 		String localNodeName = getLocalNode().getName();
-		for (int i = 0; i < slices.length; i++) {
-			Service.Slice s = slices[i];
+		for (Slice s : slices)
+		{
 			String sliceName = s.getNode().getName();
-			if (includeMyself || !sliceName.equals(localNodeName)) {
+			if (includeMyself || !sliceName.equals(localNodeName))
+			{
 				s.serve(cmd);
 				Object ret = cmd.getReturnValue();
-				if (ret instanceof Throwable) {
+				if (ret instanceof Throwable)
+				{
 					myLogger.log(Logger.WARNING, "Error propagating H-command " + cmd.getName() + " to slice " + sliceName, ((Throwable) ret));
 				}
 			}
@@ -266,9 +268,11 @@ public abstract class BaseService implements Service {
 	public Object submit(VerticalCommand cmd) throws ServiceException {
 		String cmdName = cmd.getName();
 		String[] ownedCommands = getOwnedCommands();
-		
-		for(int i = 0; i < ownedCommands.length; i++) {
-			if(cmdName.equals(ownedCommands[i])) {
+
+		for (String ownedCommand : ownedCommands)
+		{
+			if (cmdName.equals(ownedCommand))
+			{
 				return myCommandProcessor.processOutgoing(cmd);
 			}
 		}
@@ -307,12 +311,12 @@ public abstract class BaseService implements Service {
 	 */
 	public String dump(String key) {
 		if (key == null || key.equals(ALL_DUMP_KEY)) {
-			StringBuffer sb = new StringBuffer("LOCAL: ").append(isLocal()).append('\n');
+			StringBuilder sb = new StringBuilder("LOCAL: ").append(isLocal()).append('\n');
 			sb.append("CACHED SLICES:\n");
 			Iterator it = slices.keySet().iterator();
 			while (it.hasNext()) {
 				String name = (String) it.next();
-				sb.append("- ").append(name).append(" --> "+stringifySlice((Slice) slices.get(name))).append("\n");
+				sb.append("- ").append(name).append(" --> ").append(stringifySlice((Slice) slices.get(name))).append("\n");
 			}
 			
 			return sb.toString();
@@ -322,10 +326,10 @@ public abstract class BaseService implements Service {
 		}
 	}
 
-	public static final String stringifySlice(Slice s) {
-		StringBuffer sb = new StringBuffer("SLICE ");
+	public static String stringifySlice(Slice s) {
+		StringBuilder sb = new StringBuilder("SLICE ");
 		try {
-			sb.append(s.getClass().getName()).append(": node = "+s.getNode().getName());
+			sb.append(s.getClass().getName()).append(": node = ").append(s.getNode().getName());
 		}
 		catch (ServiceException se) {
 			// Should never happen as this is a local call
