@@ -253,7 +253,6 @@ public class TopicManagementService extends BaseService {
 				// Be sure to get the new (fresh) slice --> Bypass the service cache
 				TopicManagementSlice newSlice = (TopicManagementSlice) getFreshSlice(newSliceName);
 				List<TopicRegistration> registrations = topicTable.getAllRegistrations();
-				myLogger.log(Logger.WARNING, "START: handle new slice " + newSliceName + " " + registrations.size() + " registrations to handle.");
 				for (TopicRegistration reg : registrations)
 				{
 					newSlice.register(reg.getAID(), reg.getTopic());
@@ -263,10 +262,10 @@ public class TopicManagementService extends BaseService {
 				updatedRegistrations.removeAll(registrations);
 				if (updatedRegistrations.size() > 0)
 				{
-					myLogger.log(Logger.WARNING, "Second pass: handle new slice " + newSliceName + " " + updatedRegistrations.size() + " registrations to handle.");
+					myLogger.log(Logger.WARNING, "Handle new slice: Second pass: " + newSliceName + " " + updatedRegistrations.size() + " registrations to handle.");
 					for (TopicRegistration reg : updatedRegistrations)
 					{
-						//newSlice.register(reg.getAID(), reg.getTopic());
+						newSlice.register(reg.getAID(), reg.getTopic());
 					}
 				}
 			}
