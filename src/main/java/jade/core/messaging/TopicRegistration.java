@@ -52,4 +52,20 @@ class TopicRegistration {
 	public String toString() {
 		return aid.getName()+" --> "+topic.getLocalName();
 	}
+
+	@Override
+	public boolean equals(Object obj)
+	{
+		if (obj instanceof  TopicRegistration)
+		{
+			return aid.equals(((TopicRegistration) obj).getAID()) && topic.equals(((TopicRegistration) obj).getTopic());
+		}
+		return false;
+	}
+
+	@Override
+	public int hashCode() {
+		return aid.hashCode() + topic.hashCode();
+	}
+
 }

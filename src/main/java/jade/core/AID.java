@@ -66,8 +66,6 @@ public class AID implements Comparable, Serializable {
 	
 	private Properties userDefSlots = new Properties();
 	
-	
-	
 	/**
 	 * Constructs an Agent-Identifier whose slot name is set to an empty string
 	 */
@@ -109,11 +107,11 @@ public class AID implements Comparable, Serializable {
 			setLocalName(name);
 	}
 	
-	static final String getPlatformID() {
+	static String getPlatformID() {
 		return platformID;
 	}
 	
-	static final void setPlatformID(String id) {
+	static void setPlatformID(String id) {
 		platformID = id;
 	}
 	
@@ -321,9 +319,10 @@ public class AID implements Comparable, Serializable {
 		/*#MIDP_INCLUDE_BEGIN
 		 addresses.removeAllElements();
 		 #MIDP_INCLUDE_END*/
-		
-		for(int i = 0; i < arr.length; i++) {
-			addAddresses(arr[i]);
+
+		for (String s : arr)
+		{
+			addAddresses(s);
 		}
 	}
 	
@@ -352,9 +351,10 @@ public class AID implements Comparable, Serializable {
 		/*#MIDP_INCLUDE_BEGIN
 		 resolvers.removeAllElements();
 		 #MIDP_INCLUDE_END*/
-		
-		for(int i = 0; i < arr.length; i++) {
-			addResolvers(arr[i]);
+
+		for (AID aid : arr)
+		{
+			addResolvers(aid);
 		}
 	}
 	
@@ -465,8 +465,7 @@ public class AID implements Comparable, Serializable {
 		
 		return result;
 	} 
-	
-	
+
 	/**
 	 Equality operation. This method compares an <code>AID</code> object with
 	 another or with a Java <code>String</code>. The comparison is case
