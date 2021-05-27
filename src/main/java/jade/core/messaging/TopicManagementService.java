@@ -254,6 +254,7 @@ public class TopicManagementService extends BaseService {
 				// Be sure to get the new (fresh) slice --> Bypass the service cache
 				TopicManagementSlice newSlice = (TopicManagementSlice) getFreshSlice(newSliceName);
 				List<TopicRegistration> registrations = topicTable.getAllRegistrations();
+				myLogger.log(Logger.WARNING, "START: handle new slice " + newSliceName + " " + registrations.size() + " registrations to handle.");
 				for (TopicRegistration reg : registrations)
 				{
 					myLogger.log(Logger.WARNING, "New Slice: Propagating registration of agent " + reg.getAID().getName() + " topic " +
@@ -262,7 +263,9 @@ public class TopicManagementService extends BaseService {
 				}
 				// The above can take a while. Check table has not been updated while we were running.
 				List<TopicRegistration> updatedRegistrations = topicTable.getAllRegistrations();
+				myLogger.log(Logger.WARNING, "Second pass: handle new slice " + newSliceName + " " + updatedRegistrations.size() + " registrations after first pass.");
 				updatedRegistrations.removeAll(registrations);
+				myLogger.log(Logger.WARNING, "Second pass: handle new slice " + newSliceName + " " + updatedRegistrations.size() + " registrations to handle.");
 				for (TopicRegistration reg : updatedRegistrations)
 				{
 					myLogger.log(Logger.WARNING, "New Slice: Second pass: Propagating registration of agent " + reg.getAID().getName() + " topic " +
