@@ -93,10 +93,10 @@ class PersistentDeliveryManager {
 			return storeName;
 		}
 
-		private GenericMessage toDeliver;
-		private AID receiver;
-		private MessageManager.Channel channel;
-		private String storeName;
+		private final GenericMessage toDeliver;
+		private final AID receiver;
+		private final MessageManager.Channel channel;
+		private final String storeName;
 
 
 	} // End of DeliveryItem class
@@ -119,8 +119,9 @@ class PersistentDeliveryManager {
 						// If the receiver still not exists and the due date has elapsed
 						// the sender will get back a FAILURE
 						Object[] keys = pendingMessages.keySet().toArray();
-						for(int i = 0; i < keys.length; i++) {
-							flushMessages((AID) keys[i]);
+						for (Object key : keys)
+						{
+							flushMessages((AID) key);
 						}
 					}
 				}
@@ -141,8 +142,8 @@ class PersistentDeliveryManager {
 		}
 
 		private boolean active = false;
-		private long period;
-		private Thread myThread;
+		private final long period;
+		private final Thread myThread;
 
 	} // End of ExpirationChecker class
 
@@ -213,11 +214,8 @@ class PersistentDeliveryManager {
 
 			});
 		}
-		catch(IOException ioe) {
+		catch(Exception ioe) {
 			ioe.printStackTrace();
-		}
-		catch(Exception e) {
-			e.printStackTrace();
 		}
 
 		sendFailurePeriod = DEFAULT_SENDFAILUREPERIOD;
@@ -322,7 +320,7 @@ class PersistentDeliveryManager {
 	private long users;
 
 	// The table of undelivered messages to send
-	private Map pendingMessages = new HashMap();
+	private final Map pendingMessages = new HashMap();
 
 	// The active object that periodically checks the due date of ACL
 	// messages and sends them after it expired

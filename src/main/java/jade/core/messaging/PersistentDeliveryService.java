@@ -50,10 +50,7 @@ import jade.domain.FIPAAgentManagement.Envelope;
 
 import jade.util.Logger;
 
-
-
 /**
-
    The JADE service to manage the persistent storage of undelivered
    ACL messages installed on the platform.
 
@@ -114,7 +111,6 @@ public class PersistentDeliveryService extends BaseService {
 
 	static final String ACL_USERDEF_DUE_DATE = "JADE-persistentdelivery-duedate";
 
-
 	public void init(AgentContainer ac, Profile p) throws ProfileException {
 		super.init(ac, p);
 		myContainer = ac;
@@ -147,7 +143,6 @@ public class PersistentDeliveryService extends BaseService {
 		}
 	}
 
-
 	/**
        Outgoing command FILTER.
        Processes the NOTIFY_FAILURE command
@@ -163,11 +158,8 @@ public class PersistentDeliveryService extends BaseService {
 					return handleNotifyFailure(cmd);
 				}
 			}
-			catch(IMTPException imtpe) {
+			catch(IMTPException | ServiceException imtpe) {
 				cmd.setReturnValue(imtpe);
-			}
-			catch(ServiceException se) {
-				cmd.setReturnValue(se);
 			}
 
 			// Let the command through
@@ -183,35 +175,40 @@ public class PersistentDeliveryService extends BaseService {
 			if(myLogger.isLoggable(Logger.FINE))
 				myLogger.log(Logger.FINE,"Persistent-Delivery - Processing failed message "+MessageManager.stringify(msg)+" for agent "+receiver.getName());
 
-
 			// FIXME: We should check if the failure is due to a "not found receiver"
 
 			// Ask all storage-enabled slices whether the failed message should be stored
 			Service.Slice[] slices = getStorageEnabledSlices();
-			for(int i = 0; i < slices.length; i++) {
-				PersistentDeliverySlice slice = (PersistentDeliverySlice)slices[i];
+			for (Slice value : slices)
+			{
+				PersistentDeliverySlice slice = (PersistentDeliverySlice) value;
 				String sliceName = null;
-				try {
+				try
+				{
 					sliceName = slice.getNode().getName();
 					boolean firstTime = (acl.getUserDefinedParameter(ACL_USERDEF_DUE_DATE) == null);
-					boolean accepted = false;
-					try {
+					boolean accepted;
+					try
+					{
 						accepted = slice.storeMessage(null, msg, receiver);
 					}
-					catch(IMTPException imtpe) {
+					catch (IMTPException imtpe)
+					{
 						// Try to get a fresh slice and repeat...
-						slice = (PersistentDeliverySlice)getFreshSlice(sliceName);
+						slice = (PersistentDeliverySlice) getFreshSlice(sliceName);
 						accepted = slice.storeMessage(null, msg, receiver);
 					}
 
-					if(accepted) {
-						myLogger.log((firstTime ? Logger.INFO : Logger.FINE) ,"Persistent-Delivery - Message "+MessageManager.stringify(msg)+" for agent "+receiver.getName()+" stored on node "+sliceName);
+					if (accepted)
+					{
+						myLogger.log((firstTime ? Logger.INFO : Logger.FINE), "Persistent-Delivery - Message " + MessageManager.stringify(msg) + " for agent " + receiver.getName() + " stored on node " + sliceName);
 						// The message was stored --> Veto the NOTIFY_FAILURE command
 						return false;
 					}
 				}
-				catch(Exception e) {
-					myLogger.log(Logger.WARNING,"Persistent-Delivery - Error trying to store message "+MessageManager.stringify(msg)+" for agent "+receiver.getName()+" on node "+sliceName);
+				catch (Exception e)
+				{
+					myLogger.log(Logger.WARNING, "Persistent-Delivery - Error trying to store message " + MessageManager.stringify(msg) + " for agent " + receiver.getName() + " on node " + sliceName);
 					// Ignore it and try other slices...
 				}
 			}
@@ -239,11 +236,8 @@ public class PersistentDeliveryService extends BaseService {
 					handleInformCreated(cmd);
 				}
 			}
-			catch(IMTPException imtpe) {
+			catch(IMTPException | ServiceException imtpe) {
 				cmd.setReturnValue(imtpe);
-			}
-			catch(ServiceException se) {
-				cmd.setReturnValue(se);
 			}
 		}
 
@@ -277,7 +271,6 @@ public class PersistentDeliveryService extends BaseService {
 		}
 
 		public VerticalCommand serve(HorizontalCommand cmd) {
-			VerticalCommand result = null;
 			try {
 				String cmdName = cmd.getName();
 				Object[] params = cmd.getParams();
@@ -293,11 +286,11 @@ public class PersistentDeliveryService extends BaseService {
 					GenericMessage msg = new GenericMessage();
 					msg.update(acl, env, payload);
 					msg.setTraceID(traceId);
-					msg.setForeignReceiver(foreignRecv.booleanValue());
+					msg.setForeignReceiver(foreignRecv);
 					AID receiver = (AID)params[6];
 
 					boolean stored = storeMessage(storeName, msg, receiver);
-					cmd.setReturnValue(new Boolean(stored));
+					cmd.setReturnValue(stored);
 				}
 				else if(cmdName.equals(PersistentDeliverySlice.H_FLUSHMESSAGES)) {
 					AID receiver = (AID)params[0];
@@ -309,7 +302,7 @@ public class PersistentDeliveryService extends BaseService {
 				cmd.setReturnValue(t);
 			}
 
-			return result;
+			return null;
 		}
 
 		/**
@@ -422,40 +415,44 @@ public class PersistentDeliveryService extends BaseService {
 	 * This happens on the main container only.
 	 */
 	private void flushMessages(final AID target) {
-		Thread t = new Thread() {
-			public void run() {
-				try {
-					Service.Slice[] slices = getStorageEnabledSlices();
-					String sliceName = null;
-					for(int i = 0; i < slices.length; i++) {
-						PersistentDeliverySlice slice = (PersistentDeliverySlice)slices[i];
-						try {
-							sliceName = slice.getNode().getName();
-							slice.flushMessages(target);
-						}
-						catch(Exception e) {
-							myLogger.log(Logger.WARNING,"Persistent-Delivery - Error trying to flush messages for agent "+target.getName()+" on node "+sliceName);
-							// Ignore it and try other slices...
-						}
+		Thread t = new Thread(() -> {
+			try {
+				Slice[] slices = getStorageEnabledSlices();
+				String sliceName = null;
+				for (Slice value : slices)
+				{
+					PersistentDeliverySlice slice = (PersistentDeliverySlice) value;
+					try
+					{
+						sliceName = slice.getNode().getName();
+						slice.flushMessages(target);
+					}
+					catch (Exception e)
+					{
+						myLogger.log(Logger.WARNING, "Persistent-Delivery - Error trying to flush messages for agent " + target.getName() + " on node " + sliceName);
+						// Ignore it and try other slices...
 					}
 				}
-				catch (ServiceException se) {
-					myLogger.log(Logger.WARNING,"Persistent-Delivery - Error retrieving storage-enabled slices to flush persisted messages for agent "+target.getName());
-				}
 			}
-		};
+			catch (ServiceException se) {
+				myLogger.log(Logger.WARNING,"Persistent-Delivery - Error retrieving storage-enabled slices to flush persisted messages for agent "+target.getName());
+			}
+		});
 		t.start();
 	}
 	
 	private Service.Slice[] getStorageEnabledSlices() throws ServiceException {
 		if (storageEnabledSliceNames != null) {
 			List<Service.Slice> ss = new ArrayList<Service.Slice>(storageEnabledSliceNames.length);
-			for (int i = 0; i < storageEnabledSliceNames.length; ++i) {
-				try {
-					Service.Slice s = getSlice(storageEnabledSliceNames[i]);
+			for (String storageEnabledSliceName : storageEnabledSliceNames)
+			{
+				try
+				{
+					Slice s = getSlice(storageEnabledSliceName);
 					ss.add(s);
 				}
-				catch (ServiceException se) {
+				catch (ServiceException se)
+				{
 					// Slice not present
 				}
 			}

@@ -26,13 +26,13 @@ class OutBox {
 	
 	private int size = 0; // Approximated size in bytes
 	private int pendingCnt = 0;   
-	private int warningSize; 
-	private int maxSize;
-	private int sleepTimeFactor;
-	private boolean enableMultipleDelivery;
+	private final int warningSize;
+	private final int maxSize;
+	private final int sleepTimeFactor;
+	private final boolean enableMultipleDelivery;
 	private boolean overWarningSize = false;
 	
-	private MessageManager manager;
+	private final MessageManager manager;
 	
 	private long lastDiscardedLogTime = -1;
 	private long discardedSinceLastLogCnt = 0;
@@ -45,7 +45,7 @@ class OutBox {
 	// messages for the currently addressed receivers 
 	private final RoundList messagesByOrder = new RoundList();
 
-	private Logger myLogger;
+	private final Logger myLogger;
 
 	OutBox(int warningSize, int maxSize, int sleepTimeFactor, boolean enableMultipleDelivery, MessageManager manager) {
 		this.warningSize = warningSize;
@@ -72,7 +72,7 @@ class OutBox {
 			synchronized (this) {
 				if ((time - lastDiscardedLogTime) > 1000) {
 					String servedWhileDiscardingStr = servedSinceLastDiscardedLogCnt >= 0 ? " ("+servedSinceLastDiscardedLogCnt+" messages served since last discard-log)" : "";
-					myLogger.log(Logger.SEVERE, String.valueOf(discardedSinceLastLogCnt+1)+" message(s) discarded by MessageManager! Current-queue-size = "+size+", max-size = "+maxSize+", number of pending messages = "+pendingCnt+", size of last message = "+msg.length()+servedWhileDiscardingStr);
+					myLogger.log(Logger.SEVERE, (discardedSinceLastLogCnt + 1) +" message(s) discarded by MessageManager! Current-queue-size = "+size+", max-size = "+maxSize+", number of pending messages = "+pendingCnt+", size of last message = "+msg.length()+servedWhileDiscardingStr);
 					lastDiscardedLogTime = time;
 					discardedSinceLastLogCnt = 0;
 					servedSinceLastDiscardedLogCnt = 0;
@@ -133,30 +133,12 @@ class OutBox {
 	}
 
 	/**
-	 * Add a message to the head of the Box of messages for the indicated 
-	 * receiver.
-	 * This method is executed by the TimerDispatcher Thread when a 
-	 * retransmission timer expires. Therefore a Box of messages for the
-	 * indicated receiver must already exist. Moreover the busy flag of 
-	 * this Box must be reset to allow deliverers to handle messages in it
-	 *
-	synchronized void addFirst(PendingMsg pm){
-		Box b = (Box) messagesByReceiver.get(pm.getReceiver());
-		b.addFirst(pm);
-		b.setBusy(false);
-		// Wakes up all deliverers
-		notifyAll();
-	}*/
-
-
-
-	/**
 	 * Get the first message for the first idle (i.e. not busy) receiver.
 	 * This is executed by a Deliverer thread just before delivering 
 	 * a message.
 	 */
 	synchronized final PendingMsg get(){
-		Box b = null;
+		Box b;
 		// Wait until an idle (i.e. not busy) receiver is found
 		while( (b = getNextIdle()) == null ){
 			try{
@@ -183,7 +165,7 @@ class OutBox {
 			java.util.List<GenericMessage> mm = null;
 			while (!b.isEmpty() && (mulMessageSize < 100000)) { // Max 100 Kbyte
 				if (mm == null) {
-					mm = new java.util.ArrayList<GenericMessage>();
+					mm = new java.util.ArrayList<>();
 					mm.add(pm.getMessage());
 				}
 				PendingMsg next = b.removeFirst();
@@ -211,7 +193,7 @@ class OutBox {
 	 * This method does not need to be synchronized as it is only executed
 	 * inside a synchronized block.
 	 */
-	private final Box getNextIdle(){
+	private Box getNextIdle(){
 		for (int i = 0; i < messagesByOrder.size(); ++i) {
 			Box b = (Box) messagesByOrder.get();
 			if (!b.isBusy()) {
@@ -263,7 +245,7 @@ class OutBox {
 					overWarningSize = true;
 				}
 				if (sleepTimeFactor > 0) {
-					sleepTime = (1 + ((size - warningSize) / 1000000)) * sleepTimeFactor;
+					sleepTime = (long) (1 + ((size - warningSize) / 1000000)) * sleepTimeFactor;
 				}
 			}
 		}
@@ -271,7 +253,9 @@ class OutBox {
 			try { // delay a bit this Thread because the queue is becoming too big
 				Thread.sleep(sleepTime);
 			}
-			catch (InterruptedException ie) {}
+			catch (InterruptedException ie) {
+				//
+			}
 		}
 	}
 
@@ -300,7 +284,7 @@ class OutBox {
 	 * This class represents a Box of messages to be delivered to 
 	 * a single receiver
 	 */
-	private class Box {
+	private static class Box {
 		private final AID receiver;
 		private boolean busy;
 		private String owner;

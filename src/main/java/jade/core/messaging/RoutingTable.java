@@ -75,11 +75,7 @@ class RoutingTable {
 		public boolean equals(Object o) {
 			try {
 				OutViaSlice rhs = (OutViaSlice)o;
-				String sn = rhs.sliceName;
-				if(sliceName.equals(sn))
-					return true;
-				else
-					return false;
+				return sliceName.equals(rhs.sliceName);
 			}
 			catch(ClassCastException cce) {
 				return false;
@@ -94,7 +90,7 @@ class RoutingTable {
 	private static class OutViaMTP implements OutPort {
 		
 		private final OutChannel myChannel;
-		private String platformInfo;
+		private final String platformInfo;
 		
 		public OutViaMTP(OutChannel proto, String platformInfo) {
 			myChannel = proto;
@@ -112,11 +108,7 @@ class RoutingTable {
 		public boolean equals(Object o) {
 			try {
 				OutViaMTP rhs = (OutViaMTP)o;
-				OutChannel ch = rhs.myChannel;
-				if(myChannel.equals(ch))
-					return true;
-				else
-					return false;
+				return myChannel.equals(rhs.myChannel);
 			}
 			catch(ClassCastException cce) {
 				return false;
@@ -171,9 +163,9 @@ class RoutingTable {
 	 * Inner class MTPInfo
 	 * This class just provides the association between a local MTP and its descriptor
 	 */
-	class MTPInfo {
-		private MTP mtp;
-		private MTPDescriptor dsc;
+	static class MTPInfo {
+		private final MTP mtp;
+		private final MTPDescriptor dsc;
 		
 		public MTPInfo(MTP mtp, MTPDescriptor dsc) {
 			this.mtp = mtp;
@@ -199,7 +191,7 @@ class RoutingTable {
 	
 	public RoutingTable(boolean attachPlatformInfo) {
 		if (attachPlatformInfo) {
-			platformInfo = Runtime.instance().getVersionInfo() + " (" + System.getProperty("java.version") + ", " + System.getProperty("os.name") + " " + System.getProperty("os.version") + ")";
+			platformInfo = Runtime.getVersionInfo() + " (" + System.getProperty("java.version") + ", " + System.getProperty("os.name") + " " + System.getProperty("os.version") + ")";
 		}
 	}
 	
@@ -215,8 +207,9 @@ class RoutingTable {
 		// A local MTP can also send messages, over all supported protocols
 		OutPort out = new OutViaMTP(proto, platformInfo);
 		String[] protoNames = proto.getSupportedProtocols();
-		for(int i = 0; i < protoNames.length; i++) {
-			addOutPort(protoNames[i], out, LOCAL);
+		for (String protoName : protoNames)
+		{
+			addOutPort(protoName, out, LOCAL);
 		}
 		
 		// The new MTP is a valid address for the platform
@@ -236,24 +229,16 @@ class RoutingTable {
 			MTP proto = info.getMTP();
 			// Remove all outgoing ports associated with this MTP
 			String[] protoNames = proto.getSupportedProtocols();
-			for(int i = 0; i < protoNames.length; i++) {
+			for (String protoName : protoNames)
+			{
 				OutPort out = new OutViaMTP(proto, platformInfo);
-				removeOutPort(protoNames[i], out);
+				removeOutPort(protoName, out);
 			}
 		}
 		
 		// The MTP address is not a platform address anymore
 		platformAddresses.remove(url);
-		
-		/*
-		 java.util.Iterator it = outPorts.keySet().iterator();
-		 while(it.hasNext()) {
-		 String name = (String)it.next();
-		 OutPortList l = (OutPortList)outPorts.get(name);
-		 System.out.println("<" + name + "> ==> " + l.size());
-		 }
-		 */
-		
+
 		return info;
 	}
 	
@@ -264,8 +249,9 @@ class RoutingTable {
 			// OutPort that routes messages through a container
 			OutPort out = new OutViaSlice(sliceName, where);
 			String[] protoNames = mtp.getSupportedProtocols();
-			for(int i = 0; i < protoNames.length; i++) {
-				addOutPort(protoNames[i], out, REMOTE);
+			for (String protoName : protoNames)
+			{
+				addOutPort(protoName, out, REMOTE);
 			}
 			
 			// Remote MTPs are valid platform addresses
@@ -286,8 +272,9 @@ class RoutingTable {
 		
 		OutPort ch = new OutViaSlice(sliceName, where);
 		String[] protoNames = mtp.getSupportedProtocols();
-		for(int i = 0; i < protoNames.length; i++) {
-			removeOutPort(protoNames[i], ch);
+		for (String protoName : protoNames)
+		{
+			removeOutPort(protoName, ch);
 		}
 		
 		// Remote MTPs are valid platform addresses
@@ -300,7 +287,6 @@ class RoutingTable {
 	 reaching the address <code>url</code>.
 	 */
 	public synchronized OutPort lookup(String url) {
-		//url = url.toLowerCase();
 		String proto = extractProto(url);
 		CaseInsensitiveString protoTmp = new CaseInsensitiveString(proto);
 		OutPortList l = (OutPortList)outPorts.get(protoTmp);

@@ -33,7 +33,6 @@ import jade.core.ServiceException;
 import jade.core.NotFoundException;
 import jade.security.JADESecurityException;
 import jade.util.leap.List;
-import jade.util.leap.Map;
 
 import jade.mtp.MTPDescriptor;
 import jade.mtp.MTPException;
@@ -53,60 +52,60 @@ public interface MessagingSlice extends Service.Slice {
 	/**
      The name of this service.
 	 */
-	static final String NAME = "jade.core.messaging.Messaging";
+	String NAME = "jade.core.messaging.Messaging";
 
 	/**
      This command name represents the action of sending an ACL message from an agent to another.
 	 */
-	static final String SEND_MESSAGE = "Send-Message";
+	String SEND_MESSAGE = "Send-Message";
 
 	/**
      This command name represents the action of sending back a FAILURE ACL message to notify the 
      message originator of a failed delivery.
 	 */
-	static final String NOTIFY_FAILURE = "Notify-Failure";
+	String NOTIFY_FAILURE = "Notify-Failure";
 
 	/**
      This command name represents the <code>install-mtp</code> action.
 	 */
-	static final String INSTALL_MTP = "Install-MTP";
+	String INSTALL_MTP = "Install-MTP";
 
 	/**
      This command name represents the <code>uninstall-mtp</code> action.
 	 */
-	static final String UNINSTALL_MTP = "Uninstall-MTP";
+	String UNINSTALL_MTP = "Uninstall-MTP";
 
 	/**
      This command name represents the <code>new-mtp</code> event.
 	 */
-	static final String NEW_MTP = "New-MTP";
+	String NEW_MTP = "New-MTP";
 
 	/**
      This command name represents the <code>dead-mtp</code> action.
 	 */
-	static final String DEAD_MTP = "Dead-MTP";
+	String DEAD_MTP = "Dead-MTP";
 
 	/**
      This command name represents the <code>set-platform-addresses</code> action.
 	 */
-	static final String SET_PLATFORM_ADDRESSES = "Set-Platform-Addresses";
+	String SET_PLATFORM_ADDRESSES = "Set-Platform-Addresses";
 
 
 
 	// Constants for the names of horizontal commands associated to methods
-	static final String H_DISPATCHLOCALLY = "1";
-	static final String H_ROUTEOUT = "2";
-	static final String H_GETAGENTLOCATION = "3";
-	static final String H_INSTALLMTP = "4";
-	static final String H_UNINSTALLMTP ="5";
-	static final String H_NEWMTP = "6";
-	static final String H_DEADMTP = "7";
-	static final String H_ADDROUTE = "8";
-	static final String H_REMOVEROUTE = "9";
-	static final String H_NEWALIAS = "10";
-	static final String H_DEADALIAS = "11";
-	static final String H_CURRENTALIASES = "12";
-	static final String H_TRANSFERLOCALALIASES = "13";
+	String H_DISPATCHLOCALLY = "1";
+	String H_ROUTEOUT = "2";
+	String H_GETAGENTLOCATION = "3";
+	String H_INSTALLMTP = "4";
+	String H_UNINSTALLMTP ="5";
+	String H_NEWMTP = "6";
+	String H_DEADMTP = "7";
+	String H_ADDROUTE = "8";
+	String H_REMOVEROUTE = "9";
+	String H_NEWALIAS = "10";
+	String H_DEADALIAS = "11";
+	String H_CURRENTALIASES = "12";
+	String H_TRANSFERLOCALALIASES = "13";
 
 	void dispatchLocally(AID senderAID, GenericMessage msg, AID receiverID) throws IMTPException, NotFoundException, JADESecurityException;
 	void routeOut(Envelope env, byte[] payload, AID receiverID, String address) throws IMTPException, MTPException;

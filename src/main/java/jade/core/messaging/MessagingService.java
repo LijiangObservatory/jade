@@ -30,8 +30,8 @@ import java.io.PrintWriter;
 import java.io.IOException;
 import java.util.Date;
 import java.util.Hashtable;
+import java.util.Objects;
 import java.util.Timer;
-import java.util.TimerTask;
 
 import jade.core.HorizontalCommand;
 import jade.core.VerticalCommand;
@@ -86,7 +86,6 @@ import jade.util.leap.HashMap;
 import jade.util.leap.List;
 import jade.util.Logger;
 import jade.util.HashCache;
-
 
 /**
  *
@@ -156,8 +155,8 @@ public class MessagingService extends BaseService implements MessageManager.Chan
 	protected int maxDeliveryRetryAttempts;
 	
 	// The map of local and global (used in the Main Container) aliases
-	private Hashtable localAliases = new Hashtable();
-	private Hashtable globalAliases;
+	private final Hashtable<AID, AID> localAliases = new Hashtable<>();
+	private Hashtable<AID, AID> globalAliases;
 	private List aliasListeners;
 	
 	// The handle to the MainReplicationService to keep global aliases info in synch
@@ -181,7 +180,9 @@ public class MessagingService extends BaseService implements MessageManager.Chan
 	private int deliveryTimeMeasurementRate;
 	private AverageMeasureProviderImpl deliveryTimeMeasureProvider;
 	private long postedMessageCounter;
+	@SuppressWarnings("FieldCanBeLocal")
 	private AverageMeasureProviderImpl avgQueueSizeBytesProvider;
+	@SuppressWarnings("FieldCanBeLocal")
 	private AverageMeasureProviderImpl avgQueueSizeMessagesProvider;
 	private Timer samTimer;
 	//#J2ME_EXCLUDE_END
@@ -205,8 +206,7 @@ public class MessagingService extends BaseService implements MessageManager.Chan
 	
 	public MessagingService() {
 	}
-	
-	
+
 	/**
 	 * Performs the passive initialization step of the service. This
 	 * method is called <b>before</b> activating the service. Its role
@@ -215,7 +215,7 @@ public class MessagingService extends BaseService implements MessageManager.Chan
 	 * Service implementations should not use the Service Manager and
 	 * Service Finder facilities from within this method. A
 	 * distributed initialization protocol, if needed, should be
-	 * exectuted within the <code>boot()</code> method.
+	 * executed within the <code>boot()</code> method.
 	 * @param ac The agent container this service is activated on.
 	 * @param p The configuration profile for this service.
 	 * @throws ProfileException If the given profile is not valid.
@@ -237,7 +237,7 @@ public class MessagingService extends BaseService implements MessageManager.Chan
 		routes = new RoutingTable(myProfile.getBooleanProperty(ATTACH_PLATFORM_INFO, false));
 		
 		if (myContainer.getMain() != null) {
-			globalAliases = new Hashtable();
+			globalAliases = new Hashtable<>();
 			aliasListeners = new ArrayList();
 		}
 		
@@ -320,7 +320,7 @@ public class MessagingService extends BaseService implements MessageManager.Chan
 			// MTPs
 			l = myProfile.getSpecifiers(Profile.MTPS);
 			PrintWriter f = null;
-			StringBuffer sb = null;
+			StringBuilder sb = null;
 			
 			Iterator mtps = l.iterator();
 			while (mtps.hasNext()) {
@@ -341,7 +341,7 @@ public class MessagingService extends BaseService implements MessageManager.Chan
 				if (f == null) { 
 					String fileName = myProfile.getParameter(Profile.FILE_DIR, "") + "MTPs-" + myContainer.getID().getName() + ".txt";
 					f = new PrintWriter(new FileWriter(fileName));
-					sb = new StringBuffer("MTP addresses:");
+					sb = new StringBuilder("MTP addresses:");
 				}
 				f.println(mtpAddrs[0]);
 				sb.append("\n");
@@ -409,12 +409,7 @@ public class MessagingService extends BaseService implements MessageManager.Chan
 				// MESSAGE MANAGER METRICS
 				boolean enableMessageManagerMetrics = "true".equalsIgnoreCase(myProfile.getParameter(ENABLE_MESSAGE_MANAGER_METRICS, "false"));
 				if (enableMessageManagerMetrics) {
-					avgQueueSizeBytesProvider = new MediatedMeasureProvider(new MeasureProvider() {
-						@Override
-						public Number getValue() {
-							return myMessageManager.getSize();
-						}
-					});
+					avgQueueSizeBytesProvider = new MediatedMeasureProvider(() -> myMessageManager.getSize());
 					samHelper.addEntityMeasureProvider("Message-Manager-avg-queue-size-bytes#"+myContainer.getID().getName(), avgQueueSizeBytesProvider);
 					avgQueueSizeMessagesProvider = new MediatedMeasureProvider(new MeasureProvider() {
 						@Override
@@ -423,21 +418,7 @@ public class MessagingService extends BaseService implements MessageManager.Chan
 						}
 					});
 					samHelper.addEntityMeasureProvider("Message-Manager-avg-queue-size-messages#"+myContainer.getID().getName(), avgQueueSizeMessagesProvider);
-					
-//					avgQueueSizeBytesProvider = new AverageMeasureProviderImpl();
-//					samHelper.addEntityMeasureProvider("Message-Manager-avg-queue-size-bytes#"+myContainer.getID().getName(), avgQueueSizeBytesProvider);
-//					avgQueueSizeMessagesProvider = new AverageMeasureProviderImpl();
-//					samHelper.addEntityMeasureProvider("Message-Manager-avg-queue-size-messages#"+myContainer.getID().getName(), avgQueueSizeMessagesProvider);
-//
-//					samTimer = new Timer();
-//					samTimer.scheduleAtFixedRate(new TimerTask() {
-//						@Override
-//						public void run() {
-//							avgQueueSizeBytesProvider.addSample(myMessageManager.getSize());
-//							avgQueueSizeMessagesProvider.addSample(myMessageManager.getPendingCnt());
-//						}
-//					}, 0, 30000);
-					
+										
 					samHelper.addCounterValueProvider("Message-Manager-submitted-count#"+myContainer.getID().getName(), new AbsoluteCounterValueProvider() {
 						@Override
 						public long getValue() {
@@ -489,19 +470,8 @@ public class MessagingService extends BaseService implements MessageManager.Chan
 		//#J2ME_EXCLUDE_END
 	}
 	
-//	private void stopSAM() {
-//		//#J2ME_EXCLUDE_BEGIN
-//		//#DOTNET_EXCLUDE_BEGIN
-//		if (samTimer != null) {
-//			samTimer.cancel();
-//		}
-//		//#DOTNET_EXCLUDE_END
-//		//#J2ME_EXCLUDE_END
-//	}
-
 	// kindly provided by David Bernstein, 15/6/2005
 	public void shutdown() {
-//		stopSAM();
 		// clone addresses (externally because leap list doesn't
 		// implement Cloneable) so don't get concurrent modification
 		// exception on the list as the MTPs are being uninstalled
@@ -530,9 +500,7 @@ public class MessagingService extends BaseService implements MessageManager.Chan
 				}
 			}
 		}
-	}
-	
-	
+	}	
 	
 	/**
 	 * Retrieve the name of this service, that can be used to look up
@@ -579,7 +547,7 @@ public class MessagingService extends BaseService implements MessageManager.Chan
 			public void deleteAlias(String alias) throws IMTPException, ServiceException {
 				myLogger.log(Logger.INFO, "Deleting Alias "+alias+"-->"+myAgent.getLocalName());
 				AID aliasAID = new AID(AID.createGUID(alias, myContainer.getPlatformID()), AID.ISGUID);
-				AID id = (AID) localAliases.remove(aliasAID);
+				AID id = localAliases.remove(aliasAID);
 				if (id != null) {
 					if (id.equals(myAgent.getAID())) {
 						// Alias actually removed --> notify the Main
@@ -657,7 +625,7 @@ public class MessagingService extends BaseService implements MessageManager.Chan
 	// Public since it is replicated by the MainReplicationService
 	public void deadAlias(AID alias) {
 		myLogger.log(Logger.INFO, "Removing global alias entry: "+alias.getLocalName());
-		AID agent = (AID) globalAliases.remove(alias);
+		AID agent = globalAliases.remove(alias);
 		if (agent != null) {
 			// Notify listeners
 			notifyAliasListeners(alias, agent, false); 
@@ -687,12 +655,12 @@ public class MessagingService extends BaseService implements MessageManager.Chan
 	}
 	
 	private AID resolveLocalAlias(AID id) {
-		AID mappedId = (AID) localAliases.get(id);
+		AID mappedId = localAliases.get(id);
 		return mappedId != null ? mappedId : id;
 	}
 	
 	private AID resolveGlobalAlias(AID id) {
-		AID mappedId = (AID) globalAliases.get(id);
+		AID mappedId = globalAliases.get(id);
 		return mappedId != null ? mappedId : id;
 	}
 	
@@ -736,28 +704,29 @@ public class MessagingService extends BaseService implements MessageManager.Chan
 	void notifyLocalAliases() {
 		// We do not scan the localAliases table directly since this would require a potentially long
 		// synchronized block
-		Hashtable cloned = (Hashtable) localAliases.clone();
-		java.util.Iterator it = cloned.entrySet().iterator();	
-		while (it.hasNext()) {
-			java.util.Map.Entry entry = (java.util.Map.Entry) it.next();
-			AID alias = (AID) entry.getKey();
-			AID agent = (AID) entry.getValue();
-			try {
+		Hashtable<AID, AID> cloned = (Hashtable<AID, AID>) localAliases.clone();
+		for (java.util.Map.Entry<AID, AID> aidaidEntry : cloned.entrySet())
+		{
+			AID alias = aidaidEntry.getKey();
+			AID agent = aidaidEntry.getValue();
+			try
+			{
 				notifyNewAlias(alias, agent);
 			}
-			catch (Exception e) {
-				myLogger.log(Logger.SEVERE, "Error informing recovered Main Container about alias "+alias.getLocalName()+"-->"+agent.getLocalName(), e);
+			catch (Exception e)
+			{
+				myLogger.log(Logger.SEVERE, "Error informing recovered Main Container about alias " + alias.getLocalName() + "-->" + agent.getLocalName(), e);
 			}
 		}
 	}
 	
 	// Remove all entries that maps to a given target
-	private List removeEntriesFor(Hashtable table, Object target) {
+	private List removeEntriesFor(Hashtable<AID, AID> table, Object target) {
 		List removedKeys = new ArrayList();
 		synchronized (table) {
-			java.util.Iterator it = table.entrySet().iterator();
+			java.util.Iterator<java.util.Map.Entry<AID, AID>> it = table.entrySet().iterator();
 			while (it.hasNext()) {
-				java.util.Map.Entry entry = (java.util.Map.Entry) it.next();
+				java.util.Map.Entry<AID, AID> entry = it.next();
 				if (entry.getValue().equals(target)) {
 					removedKeys.add(entry.getKey());
 					it.remove();
@@ -773,8 +742,7 @@ public class MessagingService extends BaseService implements MessageManager.Chan
 	public Service.Slice getLocalSlice() {
 		return localSlice;
 	}
-	
-	
+
 	/**
 	 * Access the command filter this service needs to perform its
 	 * tasks. This filter will be installed within the local command
@@ -814,7 +782,7 @@ public class MessagingService extends BaseService implements MessageManager.Chan
 	 * service, or an exception will be raised and service
 	 * activation will fail.
 	 *
-	 * @see jade.core.Service#getCommandSink()
+	 * @see jade.core.Service#getCommandSink(boolean) 
 	 */
 	public String[] getOwnedCommands() {
 		return OWNED_COMMANDS;
@@ -867,41 +835,35 @@ public class MessagingService extends BaseService implements MessageManager.Chan
 			
 			try {
 				String name = cmd.getName();
-				
-				if(name.equals(MessagingSlice.SEND_MESSAGE)) {
-					handleSendMessage(cmd);
-				}
-				else if(name.equals(MessagingSlice.NOTIFY_FAILURE)) {
-					handleNotifyFailure(cmd);
-				}
-				else if(name.equals(MessagingSlice.INSTALL_MTP)) {
-					Object result = handleInstallMTP(cmd);
-					cmd.setReturnValue(result);
-				}
-				else if(name.equals(MessagingSlice.UNINSTALL_MTP)) {
-					handleUninstallMTP(cmd);
-				}
-				else if(name.equals(MessagingSlice.NEW_MTP)) {
-					handleNewMTP(cmd);
-				}
-				else if(name.equals(MessagingSlice.DEAD_MTP)) {
-					handleDeadMTP(cmd);
-				}
-				else if(name.equals(MessagingSlice.SET_PLATFORM_ADDRESSES)) {
-					handleSetPlatformAddresses(cmd);
+
+				switch (name)
+				{
+					case MessagingSlice.SEND_MESSAGE:
+						handleSendMessage(cmd);
+						break;
+					case MessagingSlice.NOTIFY_FAILURE:
+						handleNotifyFailure(cmd);
+						break;
+					case MessagingSlice.INSTALL_MTP:
+						Object result = handleInstallMTP(cmd);
+						cmd.setReturnValue(result);
+						break;
+					case MessagingSlice.UNINSTALL_MTP:
+						handleUninstallMTP(cmd);
+						break;
+					case MessagingSlice.NEW_MTP:
+						handleNewMTP(cmd);
+						break;
+					case MessagingSlice.DEAD_MTP:
+						handleDeadMTP(cmd);
+						break;
+					case MessagingSlice.SET_PLATFORM_ADDRESSES:
+						handleSetPlatformAddresses(cmd);
+						break;
 				}
 			}
-			catch(IMTPException imtpe) {
+			catch(IMTPException | NotFoundException | ServiceException | MTPException imtpe) {
 				cmd.setReturnValue(imtpe);
-			}
-			catch(NotFoundException nfe) {
-				cmd.setReturnValue(nfe);
-			}
-			catch(ServiceException se) {
-				cmd.setReturnValue(se);
-			}
-			catch(MTPException mtpe) {
-				cmd.setReturnValue(mtpe);
 			}
 			catch(Throwable t) {
 				t.printStackTrace();
@@ -963,7 +925,7 @@ public class MessagingService extends BaseService implements MessageManager.Chan
 			
 			// FIXME: the content is not completely correct, but that should
 			// also avoid creating wrong content
-			String content = "( (action " + msg.getSender().toString();
+			String content = "( (action " + Objects.requireNonNull(msg.getSender());
 			content = content + " (ACLMessage) ) (MTS-error "+receiver+" "+ie.getMessage() + ") )";
 			failure.setContent(content);
 			
@@ -973,7 +935,7 @@ public class MessagingService extends BaseService implements MessageManager.Chan
 				GenericMessage gm = new GenericMessage(failure);
 				gm.setAMSFailure(true);
 				command.addParam(gm);
-				command.addParam((AID)(failure.getAllReceiver().next()));
+				command.addParam(failure.getAllReceiver().next());
 				// FIXME: We should set the AMS principal and credentials
 				
 				submit(command);
@@ -1043,7 +1005,6 @@ public class MessagingService extends BaseService implements MessageManager.Chan
 				mainSlice = (MessagingSlice)getFreshSlice(MAIN_SLICE);
 				mainSlice.deadMTP(mtp, cid);
 			}
-			
 		}
 		
 		private void handleSetPlatformAddresses(VerticalCommand cmd) {
@@ -1065,40 +1026,34 @@ public class MessagingService extends BaseService implements MessageManager.Chan
 			
 			try {
 				String name = cmd.getName();
-				if(name.equals(MessagingSlice.SEND_MESSAGE)) {
-					handleSendMessage(cmd);
-				}
-				else if(name.equals(MessagingSlice.INSTALL_MTP)) {
-					Object result = handleInstallMTP(cmd);
-					cmd.setReturnValue(result);
-				}
-				else if(name.equals(MessagingSlice.UNINSTALL_MTP)) {
-					handleUninstallMTP(cmd);
-				}
-				else if(name.equals(MessagingSlice.NEW_MTP)) {
-					handleNewMTP(cmd);
-				}
-				else if(name.equals(MessagingSlice.DEAD_MTP)) {
-					handleDeadMTP(cmd);
-				}
-				else if(name.equals(MessagingSlice.SET_PLATFORM_ADDRESSES)) {
-					handleSetPlatformAddresses(cmd);
-				}
-				else if(name.equals(Service.NEW_SLICE)) {
-					handleNewSlice(cmd);
+				switch (name)
+				{
+					case MessagingSlice.SEND_MESSAGE:
+						handleSendMessage(cmd);
+						break;
+					case MessagingSlice.INSTALL_MTP:
+						Object result = handleInstallMTP(cmd);
+						cmd.setReturnValue(result);
+						break;
+					case MessagingSlice.UNINSTALL_MTP:
+						handleUninstallMTP(cmd);
+						break;
+					case MessagingSlice.NEW_MTP:
+						handleNewMTP(cmd);
+						break;
+					case MessagingSlice.DEAD_MTP:
+						handleDeadMTP(cmd);
+						break;
+					case MessagingSlice.SET_PLATFORM_ADDRESSES:
+						handleSetPlatformAddresses(cmd);
+						break;
+					case Service.NEW_SLICE:
+						handleNewSlice(cmd);
+						break;
 				}
 			}
-			catch(IMTPException imtpe) {
+			catch(IMTPException | NotFoundException | ServiceException | MTPException imtpe) {
 				cmd.setReturnValue(imtpe);
-			}
-			catch(NotFoundException nfe) {
-				cmd.setReturnValue(nfe);
-			}
-			catch(ServiceException se) {
-				cmd.setReturnValue(se);
-			}
-			catch(MTPException mtpe) {
-				cmd.setReturnValue(mtpe);
 			}
 		}
 		
@@ -1204,18 +1159,20 @@ public class MessagingService extends BaseService implements MessageManager.Chan
 					
 					// Send all possible routes to the new slice
 					ContainerID[] cids = impl.containerIDs();
-					for(int i = 0; i < cids.length; i++) {
-						ContainerID cid = cids[i];
-						
-						try {
+					for (ContainerID cid : cids)
+					{
+						try
+						{
 							List mtps = impl.containerMTPs(cid);
 							Iterator it = mtps.iterator();
-							while(it.hasNext()) {
-								MTPDescriptor mtp = (MTPDescriptor)it.next();
+							while (it.hasNext())
+							{
+								MTPDescriptor mtp = (MTPDescriptor) it.next();
 								newSlice.addRoute(mtp, cid.getName());
 							}
 						}
-						catch(NotFoundException nfe) {
+						catch (NotFoundException nfe)
+						{
 							// Should never happen
 							nfe.printStackTrace();
 						}
@@ -1266,12 +1223,14 @@ public class MessagingService extends BaseService implements MessageManager.Chan
 						// not appear in a previous 'received' stamp
 						
 						ReceivedObject[] stamps = env.getStamps();
-						for(int i = 0; i < stamps.length; i++) {
-							String id = stamps[i].getBy();
-							if(CaseInsensitiveString.equalsIgnoreCase(id, accID)) {
+						for (ReceivedObject stamp : stamps)
+						{
+							String id = stamp.getBy();
+							if (CaseInsensitiveString.equalsIgnoreCase(id, accID))
+							{
 								System.err.println("ERROR: Message loop detected !!!");
 								System.err.println("Route is: ");
-								for(int j = 0; j < stamps.length; j++)
+								for (int j = 0; j < stamps.length; j++)
 									System.err.println("[" + j + "]" + stamps[j].getBy());
 								System.err.println("Message dispatch aborted.");
 								return;
@@ -1314,16 +1273,17 @@ public class MessagingService extends BaseService implements MessageManager.Chan
 				routes.addLocalMTP(address, proto, result);
 				
 				String[] pp = result.getSupportedProtocols();
-				for (int i = 0; i < pp.length; ++i) {
-					//log("Added Route-Via-MTP for protocol "+pp[i], 1);
+				for (String s : pp)
+				{
 					if (myLogger.isLoggable(Logger.CONFIG))
-						myLogger.log(Logger.CONFIG,"Added Route-Via-MTP for protocol "+pp[i]);
-					
+						myLogger.log(Logger.CONFIG, "Added Route-Via-MTP for protocol " + s);
+
 				}
 				
 				String[] addresses = result.getAddresses();
-				for(int i = 0; i < addresses.length; i++) {
-					myContainer.addAddressToLocalAgents(addresses[i]);
+				for (String s : addresses)
+				{
+					myContainer.addAddressToLocalAgents(s);
 				}
 				
 				GenericCommand gCmd = new GenericCommand(MessagingSlice.NEW_MTP, MessagingSlice.NAME, null);
@@ -1333,18 +1293,6 @@ public class MessagingService extends BaseService implements MessageManager.Chan
 				
 				return result;
 			}
-			/*#DOTNET_INCLUDE_BEGIN
-			 catch(System.TypeLoadException tle)
-			 {
-			 ClassNotFoundException cnfe = new ClassNotFoundException(tle.get_Message());
-			 throw new MTPException("The class " + className  + " raised IllegalAccessException (see nested exception)", cnfe);
-			 }
-			 catch(System.TypeInitializationException tie)
-			 {
-			 InstantiationException ie = new InstantiationException(tie.get_Message());
-			 throw new MTPException("The class " + className + " raised InstantiationException (see nested exception)", ie);
-			 }
-			 #DOTNET_INCLUDE_END*/
 			catch(ClassNotFoundException cnfe) 
 			{
 				throw new MTPException("ERROR: The class " + className + " for the " + address  + " MTP was not found");
@@ -1365,11 +1313,11 @@ public class MessagingService extends BaseService implements MessageManager.Chan
 				TransportAddress ta = proto.strToAddr(address);
 				proto.deactivate(ta);
 				MTPDescriptor desc = info.getDescriptor();
-				//MTPDescriptor desc = new MTPDescriptor(proto.getName(), proto.getClass().getName(), new String[] {address}, proto.getSupportedProtocols());
-				
+
 				String[] addresses = desc.getAddresses();
-				for(int i = 0; i < addresses.length; i++) {
-					myContainer.removeAddressFromLocalAgents(addresses[i]);
+				for (String s : addresses)
+				{
+					myContainer.removeAddressFromLocalAgents(s);
 				}
 				
 				GenericCommand gCmd = new GenericCommand(MessagingSlice.DEAD_MTP, MessagingSlice.NAME, null);
@@ -1386,34 +1334,39 @@ public class MessagingService extends BaseService implements MessageManager.Chan
 			MainContainer impl = myContainer.getMain();
 			
 			if(impl != null) {
-				
 				// Update the routing tables of all the other slices
 				Service.Slice[] slices = getAllSlices();
-				for(int i = 0; i < slices.length; i++) {
-					try {
-						MessagingSlice slice = (MessagingSlice)slices[i];
+				for (Slice value : slices)
+				{
+					try
+					{
+						MessagingSlice slice = (MessagingSlice) value;
 						String sliceName = slice.getNode().getName();
-						if(!sliceName.equals(cid.getName())) {
+						if (!sliceName.equals(cid.getName()))
+						{
 							slice.addRoute(mtp, cid.getName());
 						}
 					}
-					catch(Throwable t) {
+					catch (Throwable t)
+					{
 						// Re-throw allowed exceptions
-						if(t instanceof IMTPException) {
-							throw (IMTPException)t;
+						if (t instanceof IMTPException)
+						{
+							throw (IMTPException) t;
 						}
-						if(t instanceof ServiceException) {
-							throw (ServiceException)t;
+						if (t instanceof ServiceException)
+						{
+							throw (ServiceException) t;
 						}
 						//System.err.println("### addRoute() threw " + t.getClass().getName() + " ###");
-						myLogger.log(Logger.WARNING,"### addRoute() threw " + t + " ###");
+						myLogger.log(Logger.WARNING, "### addRoute() threw " + t + " ###");
 					}
 				}
 				impl.newMTP(mtp, cid);
 			}
-			else {
+			//else {
 				// Do nothing for now, but could also route the command to the main slice, thus enabling e.g. AMS replication
-			}
+			//}
 		}
 		
 		private void deadMTP(MTPDescriptor mtp, ContainerID cid) throws IMTPException, ServiceException {
@@ -1423,31 +1376,37 @@ public class MessagingService extends BaseService implements MessageManager.Chan
 				
 				// Update the routing tables of all the other slices
 				Service.Slice[] slices = getAllSlices();
-				for(int i = 0; i < slices.length; i++) {
-					try {
-						MessagingSlice slice = (MessagingSlice)slices[i];
+				for (Slice value : slices)
+				{
+					try
+					{
+						MessagingSlice slice = (MessagingSlice) value;
 						String sliceName = slice.getNode().getName();
-						if(!sliceName.equals(cid.getName())) {
+						if (!sliceName.equals(cid.getName()))
+						{
 							slice.removeRoute(mtp, cid.getName());
 						}
 					}
-					catch(Throwable t) {
+					catch (Throwable t)
+					{
 						// Re-throw allowed exceptions
-						if(t instanceof IMTPException) {
-							throw (IMTPException)t;
+						if (t instanceof IMTPException)
+						{
+							throw (IMTPException) t;
 						}
-						if(t instanceof ServiceException) {
-							throw (ServiceException)t;
+						if (t instanceof ServiceException)
+						{
+							throw (ServiceException) t;
 						}
-						
-						myLogger.log(Logger.WARNING,"### removeRoute() threw " + t + " ###");
+
+						myLogger.log(Logger.WARNING, "### removeRoute() threw " + t + " ###");
 					}
 				}
 				impl.deadMTP(mtp, cid);
 			}
-			else {
+			//else {
 				// Do nothing for now, but could also route the command to the main slice, thus enabling e.g. AMS replication
-			}
+			//}
 		}
 	} // END of inner class CommandTargetSink
 	
@@ -1479,107 +1438,133 @@ public class MessagingService extends BaseService implements MessageManager.Chan
 			try {
 				String cmdName = cmd.getName();
 				Object[] params = cmd.getParams();
-				
-				if(cmdName.equals(MessagingSlice.H_DISPATCHLOCALLY)) {
-					GenericCommand gCmd = new GenericCommand(MessagingSlice.SEND_MESSAGE, MessagingSlice.NAME, null);
-					AID senderAID = (AID)params[0];
-					GenericMessage msg = (GenericMessage)params[1];
-					AID receiverID = (AID)params[2];
-					if (params.length == 4) {
-						msg.setTimeStamp(((Long) params[3]).longValue()); 
+
+				switch (cmdName)
+				{
+					case MessagingSlice.H_DISPATCHLOCALLY:
+					{
+						GenericCommand gCmd = new GenericCommand(MessagingSlice.SEND_MESSAGE, MessagingSlice.NAME, null);
+						AID senderAID = (AID) params[0];
+						GenericMessage msg = (GenericMessage) params[1];
+						AID receiverID = (AID) params[2];
+						if (params.length == 4)
+						{
+							msg.setTimeStamp((Long) params[3]);
+						}
+						if (msg.getTraceID() != null)
+						{
+							myLogger.log(Logger.INFO, "MessagingService-slice: received message " + MessageManager.stringify(msg) + " for receiver " + receiverID.getLocalName() + ". Trace ID = " + msg.getTraceID());
+						}
+						gCmd.addParam(senderAID);
+						gCmd.addParam(msg);
+						gCmd.addParam(receiverID);
+						result = gCmd;
+						break;
 					}
-					if (msg.getTraceID() != null) {
-						myLogger.log(Logger.INFO, "MessagingService-slice: received message "+MessageManager.stringify(msg)+" for receiver "+receiverID.getLocalName()+". Trace ID = "+msg.getTraceID());
+					case MessagingSlice.H_GETAGENTLOCATION:
+						AID agentID = (AID) params[0];
+
+						cmd.setReturnValue(getAgentLocation(agentID));
+						break;
+					case MessagingSlice.H_ROUTEOUT:
+					{
+						Envelope env = (Envelope) params[0];
+						byte[] payload = (byte[]) params[1];
+						AID receiverID = (AID) params[2];
+						String address = (String) params[3];
+
+						routeOut(env, payload, receiverID, address);
+						break;
 					}
-					gCmd.addParam(senderAID);
-					gCmd.addParam(msg);
-					gCmd.addParam(receiverID);
-					result = gCmd;
-				}
-				else if(cmdName.equals(MessagingSlice.H_GETAGENTLOCATION)) {
-					AID agentID = (AID)params[0];
-					
-					cmd.setReturnValue(getAgentLocation(agentID));
-				}
-				else if(cmdName.equals(MessagingSlice.H_ROUTEOUT)) {
-					Envelope env = (Envelope)params[0];
-					byte[] payload = (byte[])params[1];
-					AID receiverID = (AID)params[2];
-					String address = (String)params[3];
-					
-					routeOut(env, payload, receiverID, address);
-				}
-				else if(cmdName.equals(MessagingSlice.H_INSTALLMTP)) {
-					GenericCommand gCmd = new GenericCommand(MessagingSlice.INSTALL_MTP, MessagingSlice.NAME, null);
-					String address = (String)params[0];
-					String className = (String)params[1];
-					gCmd.addParam(address);
-					gCmd.addParam(className);
-					
-					result = gCmd;
-				}
-				else if(cmdName.equals(MessagingSlice.H_UNINSTALLMTP)) {
-					GenericCommand gCmd = new GenericCommand(MessagingSlice.UNINSTALL_MTP, MessagingSlice.NAME, null);
-					String address = (String)params[0];
-					gCmd.addParam(address);
-					
-					result = gCmd;
-				}
-				else if(cmdName.equals(MessagingSlice.H_NEWMTP)) {
-					MTPDescriptor mtp = (MTPDescriptor)params[0];
-					ContainerID cid = (ContainerID)params[1];
-					
-					GenericCommand gCmd = new GenericCommand(MessagingSlice.NEW_MTP, MessagingSlice.NAME, null);
-					gCmd.addParam(mtp);
-					gCmd.addParam(cid);
-					
-					result = gCmd;
-				}
-				else if(cmdName.equals(MessagingSlice.H_DEADMTP)) {
-					MTPDescriptor mtp = (MTPDescriptor)params[0];
-					ContainerID cid = (ContainerID)params[1];
-					
-					GenericCommand gCmd = new GenericCommand(MessagingSlice.DEAD_MTP, MessagingSlice.NAME, null);
-					gCmd.addParam(mtp);
-					gCmd.addParam(cid);
-					
-					result = gCmd;
-				}
-				else if(cmdName.equals(MessagingSlice.H_ADDROUTE)) {
-					MTPDescriptor mtp = (MTPDescriptor)params[0];
-					String sliceName = (String)params[1];
-					
-					addRoute(mtp, sliceName);
-				}
-				else if(cmdName.equals(MessagingSlice.H_REMOVEROUTE)) {
-					MTPDescriptor mtp = (MTPDescriptor)params[0];
-					String sliceName = (String)params[1];
-					
-					removeRoute(mtp, sliceName);
-				}
-				else if (cmdName.equals(MessagingSlice.H_NEWALIAS)) {
-					AID alias = (AID) params[0]; 
-					AID name = (AID) params[1]; 
-					
-					newAlias(alias, name);
-					replicationHandle.invokeReplicatedMethod("newAlias", params);
-				}
-				else if (cmdName.equals(MessagingSlice.H_DEADALIAS)) {
-					AID alias = (AID) params[0]; 
-					
-					deadAlias(alias);
-					replicationHandle.invokeReplicatedMethod("deadAlias", params);
-				}
-				else if (cmdName.equals(MessagingSlice.H_CURRENTALIASES)) {
-					globalAliases = (Hashtable) params[0]; 
-				}
-				else if (cmdName.equals(MessagingSlice.H_TRANSFERLOCALALIASES)) {
-					AID agent = (AID) params[0];
-					List aliases = (List) params[1];
-					Iterator it = aliases.iterator();
-					while (it.hasNext()) {
-						localAliases.put((AID) it.next(), agent);
+					case MessagingSlice.H_INSTALLMTP:
+					{
+						GenericCommand gCmd = new GenericCommand(MessagingSlice.INSTALL_MTP, MessagingSlice.NAME, null);
+						String address = (String) params[0];
+						String className = (String) params[1];
+						gCmd.addParam(address);
+						gCmd.addParam(className);
+
+						result = gCmd;
+						break;
 					}
+					case MessagingSlice.H_UNINSTALLMTP:
+					{
+						GenericCommand gCmd = new GenericCommand(MessagingSlice.UNINSTALL_MTP, MessagingSlice.NAME, null);
+						String address = (String) params[0];
+						gCmd.addParam(address);
+
+						result = gCmd;
+						break;
+					}
+					case MessagingSlice.H_NEWMTP:
+					{
+						MTPDescriptor mtp = (MTPDescriptor) params[0];
+						ContainerID cid = (ContainerID) params[1];
+
+						GenericCommand gCmd = new GenericCommand(MessagingSlice.NEW_MTP, MessagingSlice.NAME, null);
+						gCmd.addParam(mtp);
+						gCmd.addParam(cid);
+
+						result = gCmd;
+						break;
+					}
+					case MessagingSlice.H_DEADMTP:
+					{
+						MTPDescriptor mtp = (MTPDescriptor) params[0];
+						ContainerID cid = (ContainerID) params[1];
+
+						GenericCommand gCmd = new GenericCommand(MessagingSlice.DEAD_MTP, MessagingSlice.NAME, null);
+						gCmd.addParam(mtp);
+						gCmd.addParam(cid);
+
+						result = gCmd;
+						break;
+					}
+					case MessagingSlice.H_ADDROUTE:
+					{
+						MTPDescriptor mtp = (MTPDescriptor) params[0];
+						String sliceName = (String) params[1];
+
+						addRoute(mtp, sliceName);
+						break;
+					}
+					case MessagingSlice.H_REMOVEROUTE:
+					{
+						MTPDescriptor mtp = (MTPDescriptor) params[0];
+						String sliceName = (String) params[1];
+
+						removeRoute(mtp, sliceName);
+						break;
+					}
+					case MessagingSlice.H_NEWALIAS:
+					{
+						AID alias = (AID) params[0];
+						AID name = (AID) params[1];
+
+						newAlias(alias, name);
+						replicationHandle.invokeReplicatedMethod("newAlias", params);
+						break;
+					}
+					case MessagingSlice.H_DEADALIAS:
+					{
+						AID alias = (AID) params[0];
+
+						deadAlias(alias);
+						replicationHandle.invokeReplicatedMethod("deadAlias", params);
+						break;
+					}
+					case MessagingSlice.H_CURRENTALIASES:
+						globalAliases = (Hashtable<AID, AID>) params[0];
+						break;
+					case MessagingSlice.H_TRANSFERLOCALALIASES:
+						AID agent = (AID) params[0];
+						List aliases = (List) params[1];
+						Iterator it = aliases.iterator();
+						while (it.hasNext())
+						{
+							localAliases.put((AID) it.next(), agent);
+						}
+						break;
 				}
 			}
 			catch(Throwable t) {
@@ -1608,14 +1593,16 @@ public class MessagingService extends BaseService implements MessageManager.Chan
 				// This is actually a new MTP --> Add the new address to all local agents.
 				// NOTE that a notification about a remote MTP can be received more than once in case of fault and successive recovery of the Main Container
 				String[] pp = mtp.getSupportedProtocols();
-				for (int i = 0; i < pp.length; ++i) {
+				for (String s : pp)
+				{
 					if (myLogger.isLoggable(Logger.CONFIG))
-						myLogger.log(Logger.CONFIG,"Added Route-Via-Slice("+sliceName+") for protocol "+pp[i]);			
+						myLogger.log(Logger.CONFIG, "Added Route-Via-Slice(" + sliceName + ") for protocol " + s);
 				}
 				
 				String[] addresses = mtp.getAddresses();
-				for(int i = 0; i < addresses.length; i++) {
-					myContainer.addAddressToLocalAgents(addresses[i]);
+				for (String address : addresses)
+				{
+					myContainer.addAddressToLocalAgents(address);
 				}
 			}
 		}
@@ -1626,20 +1613,19 @@ public class MessagingService extends BaseService implements MessageManager.Chan
 			routes.removeRemoteMTP(mtp, sliceName, slice);
 			
 			String[] pp = mtp.getSupportedProtocols();
-			for (int i = 0; i < pp.length; ++i) {
+			for (String s : pp)
+			{
 				if (myLogger.isLoggable(Logger.CONFIG))
-					myLogger.log(Logger.CONFIG,"Removed Route-Via-Slice("+sliceName+") for protocol "+pp[i]);
-				
+					myLogger.log(Logger.CONFIG, "Removed Route-Via-Slice(" + sliceName + ") for protocol " + s);
 			}
 			
 			String[] addresses = mtp.getAddresses();
-			for(int i = 0; i < addresses.length; i++) {
-				myContainer.removeAddressFromLocalAgents(addresses[i]);
+			for (String address : addresses)
+			{
+				myContainer.removeAddressFromLocalAgents(address);
 			}
 		}
-		
 	} // End of ServiceComponent class
-	
 	
 	void stamp(GenericMessage gmsg) {
 		//#J2ME_EXCLUDE_BEGIN
@@ -1807,7 +1793,6 @@ public class MessagingService extends BaseService implements MessageManager.Chan
 		}
 	}
 	
-	
 	private void deliverUntilOK(GenericMessage msg, AID receiverID) throws IMTPException, NotFoundException, ServiceException, JADESecurityException {
 		int attemptsCnt = 0;
 		while (true) {
@@ -1939,10 +1924,8 @@ public class MessagingService extends BaseService implements MessageManager.Chan
 		catch(IMTPException imtpe) {
 			throw new MTPException("Error during message routing", imtpe);
 		}
-		
 	}
-	
-	
+
 	/**
 	 * This method is used internally by the platform in order
 	 * to notify the sender of a message that a failure was reported by
@@ -1965,7 +1948,7 @@ public class MessagingService extends BaseService implements MessageManager.Chan
 			// In this case in fact the message is encoded. Try to decode it so that a suitable FAILURE response can be sent back.
 			// If the payload is mangled in some way (e.g. encrypted) decoding will fail and no suitable FAILURE response will be sent
 			try {
-				acl = ((IncomingEncodingFilter) encInFilter).decodeMessage(msg.getEnvelope(), msg.getPayload());
+				acl = encInFilter.decodeMessage(msg.getEnvelope(), msg.getPayload());
 				acl.setEnvelope(msg.getEnvelope());
 				msg.setACLMessage(acl);
 			}
@@ -1996,8 +1979,7 @@ public class MessagingService extends BaseService implements MessageManager.Chan
 			se.printStackTrace();
 		}
 	}
-	
-	
+
 	/*
 	 * This method is called before preparing the Envelope of an outgoing message.
 	 * It checks for all the AIDs present in the message and adds the addresses, if not present
@@ -2025,8 +2007,10 @@ public class MessagingService extends BaseService implements MessageManager.Chan
 			}
 			else {
 				boolean allLocalAddresses = true;
-				for (int i = 0; i < addresses.length; ++i) {
-					if (!isPlatformAddress(addresses[i])) {
+				for (String address : addresses)
+				{
+					if (!isPlatformAddress(address))
+					{
 						allLocalAddresses = false;
 						break;
 					}
@@ -2056,20 +2040,16 @@ public class MessagingService extends BaseService implements MessageManager.Chan
 						}
 						return true;
 					}
-					catch (NotFoundException nfe) {
+					catch (Exception nfe) {
 						// The agent does not live in the platform
 						return false;
-					}
-					catch (Exception e) {
-						// Intra-platform delivery would fail, so try inter-platform
-						return false;
-					}
+					}// Intra-platform delivery would fail, so try inter-platform
 				}
 			}
 		}
 	}
 	
-	private final boolean isPlatformAddress(String addr) {
+	private boolean isPlatformAddress(String addr) {
 		Iterator it = routes.getAddresses();
 		while(it.hasNext()) {
 			String ad = (String)it.next();
@@ -2086,7 +2066,7 @@ public class MessagingService extends BaseService implements MessageManager.Chan
 	}
 	
 	
-	private final boolean needSynchDelivery(GenericMessage gMsg) {
+	private boolean needSynchDelivery(GenericMessage gMsg) {
 		ACLMessage acl = gMsg.getACLMessage();
 		if (acl != null) {
 			return "true".equals(acl.clearUserDefinedParameter(ACLMessage.SYNCH_DELIVERY));
@@ -2147,7 +2127,7 @@ public class MessagingService extends BaseService implements MessageManager.Chan
 	}
 	
 	public String dump(String key) {
-		StringBuffer sb = new StringBuffer("LOCAL ALIASES:\n");
+		StringBuilder sb = new StringBuilder("LOCAL ALIASES:\n");
 		if (localAliases.size() > 0) {
 			sb.append(stringifyAliasesMap(localAliases));
 		}
@@ -2167,13 +2147,12 @@ public class MessagingService extends BaseService implements MessageManager.Chan
  		return sb.toString();
 	}
 	
-	private String stringifyAliasesMap(Hashtable aliases) {
-		StringBuffer sb = new StringBuffer();
-		java.util.Iterator it = aliases.keySet().iterator();
-		while (it.hasNext()) {
-			AID alias = (AID) it.next();
-			AID agent = (AID) aliases.get(alias);
-			sb.append("- "+alias.getLocalName()+" --> "+agent.getLocalName()+"\n");
+	private String stringifyAliasesMap(Hashtable<AID, AID> aliases) {
+		StringBuilder sb = new StringBuilder();
+		for (AID alias : aliases.keySet())
+		{
+			AID agent = aliases.get(alias);
+			sb.append("- ").append(alias.getLocalName()).append(" --> ").append(agent.getLocalName()).append("\n");
 		}
 		return sb.toString();
 	}

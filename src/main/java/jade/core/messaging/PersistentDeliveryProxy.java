@@ -26,21 +26,12 @@ package jade.core.messaging;
 //#J2ME_EXCLUDE_FILE
 
 import jade.core.Node;
-import jade.core.Service;
 import jade.core.SliceProxy;
 import jade.core.GenericCommand;
 import jade.core.AID;
-import jade.core.ContainerID;
-import jade.core.Location;
 import jade.core.IMTPException;
 import jade.core.ServiceException;
 import jade.core.NotFoundException;
-import jade.core.NameClashException;
-
-import jade.lang.acl.ACLMessage;
-import jade.lang.acl.MessageTemplate;
-import jade.domain.FIPAAgentManagement.Envelope;
-
 
 /**
    The remote proxy for the JADE kernel-level service managing a
@@ -61,13 +52,13 @@ public class PersistentDeliveryProxy extends SliceProxy implements PersistentDel
 			cmd.addParam(msg.getACLMessage());
 			cmd.addParam(msg.getEnvelope());
 			cmd.addParam(msg.getPayload());
-			cmd.addParam(new Boolean(msg.hasForeignReceiver()));
+			cmd.addParam(msg.hasForeignReceiver());
 			cmd.addParam(msg.getTraceID());
 			cmd.addParam(receiver);
 
 			Node n = getNode();
 			Object result = n.accept(cmd);
-			if((result != null) && (result instanceof Throwable)) {
+			if((result instanceof Throwable)) {
 				if(result instanceof IMTPException) {
 					throw (IMTPException)result;
 				}
@@ -78,7 +69,7 @@ public class PersistentDeliveryProxy extends SliceProxy implements PersistentDel
 					throw new IMTPException("An undeclared exception was thrown", (Throwable)result);
 				}
 			}
-			return ((Boolean)result).booleanValue();
+			return (Boolean) result;
 		}
 		catch(ServiceException se) {
 			throw new IMTPException("Unable to access remote node", se);
@@ -92,7 +83,7 @@ public class PersistentDeliveryProxy extends SliceProxy implements PersistentDel
 
 			Node n = getNode();
 			Object result = n.accept(cmd);
-			if((result != null) && (result instanceof Throwable)) {
+			if((result instanceof Throwable)) {
 				if(result instanceof IMTPException) {
 					throw (IMTPException)result;
 				}

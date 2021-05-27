@@ -43,59 +43,59 @@ public interface Service {
 	   Service independent incoming vertical command issued on the Main 
 	   container whenever a new node is added
 	 */
-	public static final String NEW_NODE = "New-Node";
+	String NEW_NODE = "New-Node";
 	/**
 	   Service independent incoming vertical command issued on the Main 
 	   container whenever a node is removed
 	 */
-	public static final String DEAD_NODE = "Dead-Node";
+	String DEAD_NODE = "Dead-Node";
 	/**
 	   Service independent incoming vertical command issued on the Main 
 	   container whenever a node that was monitored by a Main container
 	   replica is adopted (i.e. the local Main container starts monitoring it) 
 	 */
-	public static final String ADOPTED_NODE = "Adopted-Node";
+	String ADOPTED_NODE = "Adopted-Node";
 	/**
 	   Service independent incoming vertical command issued on the Main 
 	   container whenever a new slice of a given service is added
 	 */
-	public static final String NEW_SLICE = "New-Slice";
+	String NEW_SLICE = "New-Slice";
 	/**
 	   Service independent incoming vertical command issued on the Main 
 	   container whenever a slice of a given service is removed
 	 */
-	public static final String DEAD_SLICE = "Dead-Slice";
+	String DEAD_SLICE = "Dead-Slice";
 	/**
 	   Service independent vertical command issued on the Main 
 	   container whenever a new main replica is added
 	 */
-	public static final String NEW_REPLICA = "New-Replica";
+	String NEW_REPLICA = "New-Replica";
 	/**
 	   Service independent incoming vertical command issued on the Main 
 	   container whenever a main replica is removed
 	 */
-	public static final String DEAD_REPLICA = "Dead-Replica";
+	String DEAD_REPLICA = "Dead-Replica";
 	/**
 	   Service independent incoming vertical command issued on a peripheral 
 	   container when a fault of the PlatformManager is detected 
 	 */
-	public static final String DEAD_PLATFORM_MANAGER = "Dead-Platform-Manager";
+	String DEAD_PLATFORM_MANAGER = "Dead-Platform-Manager";
 	/**
 	   Service independent incoming vertical command issued on a peripheral 
 	   container when it re-attaches to a recovered Main Container (see the FaultRecoveryService)
 	 */
-	public static final String REATTACHED = "Reattached";
+	String REATTACHED = "Reattached";
 	/**
 	   Service independent incoming vertical command issued on a peripheral 
 	   container when it reconnects to a new master Main Container (see the MainReplicationService)
 	 */
-	public static final String RECONNECTED = "Reconnected";
+	String RECONNECTED = "Reconnected";
 
 	/**
        The <code>Slice</code> nested interface represents that part of
        a service that is deployed at a given network node.
 	 */
-	public interface Slice extends Serializable {
+	interface Slice extends Serializable {
 
 		/**
 	   Access the service object which this slice is a part of.
@@ -110,7 +110,7 @@ public interface Service {
 		/**
 	   Access the node where this slice resides.
 
-	   @returns The node where this service slice is actually
+	   @return The node where this service slice is actually
 	   running.
 	   @throws ServiceException If some problems occur in
 	   retrieving the local node.
@@ -135,9 +135,6 @@ public interface Service {
 		 */
 		VerticalCommand serve(HorizontalCommand cmd);
 
-
-
-
 	}
 
 	//#APIDOC_EXCLUDE_BEGIN
@@ -148,7 +145,7 @@ public interface Service {
        supporting routed dispatching of horizontal commands.
 			 @deprecated use the class jade.core.SliceProxy instead of this inner class
 	 */
-	public class SliceProxy extends jade.core.SliceProxy implements Slice {
+	class SliceProxy extends jade.core.SliceProxy implements Slice {
 
 		public SliceProxy() {
 			super();
@@ -157,47 +154,7 @@ public interface Service {
 		public SliceProxy(Service svc, Node n) {
 			super(svc, n);
 		}
-		/*public SliceProxy() {
-			this(null, null);
-		}
 
-		public SliceProxy(Service svc, Node n) {
-			myService = svc;
-			myNode = n;
-		}
-
-		public Service getService() {
-			return myService;
-		}
-
-		public Node getNode() throws ServiceException {
-			return myNode;
-		}
-
-		public void setNode(Node n) {
-			myNode = n;
-		}*/
-
-		/**
-	   Try to serve an incoming horizontal command, routing it to
-	   a remote slice implementation.
-
-	   @param cmd The command to serve, possibly through the network.
-		 *
-		public VerticalCommand serve(HorizontalCommand cmd) {
-			try {
-				cmd.setReturnValue(myNode.accept(cmd));
-			}
-			catch(IMTPException imtpe) {
-				cmd.setReturnValue(new ServiceException("An error occurred while routing the command to the remote implementation", imtpe));
-			}
-			// No local processing of this command is required
-			return null;
-		}
-
-		private Node myNode;
-		private transient Service myService;
-		*/
 	}
 	//#DOTNET_EXCLUDE_END
 	//#APIDOC_EXCLUDE_END
@@ -330,7 +287,7 @@ public interface Service {
        commands (it acts purely as a command filter), it can return an
        empty array, or <code>null</code> as well.
 
-       @see jade.core.Service#getCommandSink()
+       @see jade.core.Service#getCommandSink(boolean)
 	 */
 	String[] getOwnedCommands();
 
