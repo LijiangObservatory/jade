@@ -60,10 +60,6 @@ public class TopicManagementProxy extends SliceProxy implements TopicManagementS
 					throw new IMTPException("An undeclared exception was thrown", (Throwable)result);
 				}
 			}
-			else
-			{
-				myLogger.log(Level.WARNING, "Register topic " + topic.getLocalName() + " with " + n.getName() + ". Replied with " + result);
-			}
 		}
 		catch(ServiceException se) {
 			throw new IMTPException("Unable to access remote node", se);

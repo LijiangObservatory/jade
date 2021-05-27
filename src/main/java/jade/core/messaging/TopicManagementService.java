@@ -249,7 +249,6 @@ public class TopicManagementService extends BaseService {
 		if (cmd.getService().equals(NAME)) {
 			Object[] params = cmd.getParams();
 			String newSliceName = (String) params[0];
-			//myLogger.log(Logger.WARNING, "START: handle new slice " + newSliceName);
 			try {
 				// Be sure to get the new (fresh) slice --> Bypass the service cache
 				TopicManagementSlice newSlice = (TopicManagementSlice) getFreshSlice(newSliceName);
@@ -257,25 +256,23 @@ public class TopicManagementService extends BaseService {
 				myLogger.log(Logger.WARNING, "START: handle new slice " + newSliceName + " " + registrations.size() + " registrations to handle.");
 				for (TopicRegistration reg : registrations)
 				{
-					//myLogger.log(Logger.WARNING, "New Slice: Propagating registration of agent " + reg.getAID().getName() + " topic " +
-					//		reg.getTopic().getLocalName() + " to slice " + newSlice.getNode().getName());
 					newSlice.register(reg.getAID(), reg.getTopic());
 				}
 				// The above can take a while. Check table has not been updated while we were running.
 				List<TopicRegistration> updatedRegistrations = topicTable.getAllRegistrations();
 				updatedRegistrations.removeAll(registrations);
-				myLogger.log(Logger.WARNING, "Second pass: handle new slice " + newSliceName + " " + updatedRegistrations.size() + " registrations to handle.");
-				for (TopicRegistration reg : updatedRegistrations)
+				if (updatedRegistrations.size() > 0)
 				{
-					//myLogger.log(Logger.WARNING, "New Slice: Second pass: Propagating registration of agent " + reg.getAID().getName() + " topic " +
-					//		reg.getTopic().getLocalName() + " to slice " + newSlice.getNode().getName());
-					newSlice.register(reg.getAID(), reg.getTopic());
+					myLogger.log(Logger.WARNING, "Second pass: handle new slice " + newSliceName + " " + updatedRegistrations.size() + " registrations to handle.");
+					for (TopicRegistration reg : updatedRegistrations)
+					{
+						//newSlice.register(reg.getAID(), reg.getTopic());
+					}
 				}
 			}
 			catch (Throwable t) {
 				myLogger.log(Logger.WARNING, "Error notifying new slice "+newSliceName+" about current topic registrations", t);
 			}
-			//myLogger.log(Logger.WARNING, "END: handle new slice " + newSliceName);
 		}
 	}
 	
@@ -286,19 +283,15 @@ public class TopicManagementService extends BaseService {
 		try {
 			// Be sure to get a fresh slice --> Bypass the service cache
 			TopicManagementSlice newSlice = (TopicManagementSlice) getFreshSlice(MAIN_SLICE);
-			List registrations = topicTable.getAllRegistrations();
-			//myLogger.log(Logger.WARNING, "START: handle reattach for " + newSlice.getNode().getName());
+			List<TopicRegistration> registrations = topicTable.getAllRegistrations();
 
-			for (Object registration : registrations)
+			for (TopicRegistration reg : registrations)
 			{
-				TopicRegistration reg = (TopicRegistration) registration;
 				AID aid = reg.getAID();
 				if (myContainer.acquireLocalAgent(aid) != null)
 				{
 					try
 					{
-						//myLogger.log(Logger.WARNING, "Reattach: Propagating registration of agent " + aid.getName() + " topic " +
-						//		reg.getTopic().getLocalName() + " to slice " + newSlice.getNode().getName());
 						newSlice.register(aid, reg.getTopic());
 					}
 					catch (Exception e)
@@ -312,8 +305,6 @@ public class TopicManagementService extends BaseService {
 		catch (Throwable t) {
 			myLogger.log(Logger.WARNING, "Error retrieving main slice.", t);
 		}
-
-		//myLogger.log(Logger.WARNING, "END: handle reattach for main slice");
 	}
 
 	/**
@@ -414,9 +405,6 @@ public class TopicManagementService extends BaseService {
 	// Utility methods
 	///////////////////////////////////////////////////
 	private void broadcastRegistration(AID aid, AID topic, Service.Slice[] slices) throws ServiceException {
-		//if (myLogger.isLoggable(Logger.CONFIG)) {
-		//	myLogger.log(Logger.WARNING, "START: Registering agent "+aid.getName()+" to topic "+topic.getLocalName());
-		//}
 		for (Slice value : slices)
 		{
 			String sliceName = null;
@@ -424,11 +412,6 @@ public class TopicManagementService extends BaseService {
 			{
 				TopicManagementSlice slice = (TopicManagementSlice) value;
 				sliceName = slice.getNode().getName();
-				if (myLogger.isLoggable(Logger.FINER))
-				{
-					myLogger.log(Logger.FINER, "Propagating registration of agent " + aid.getName() + " to slice " + sliceName);
-				}
-				//myLogger.log(Logger.WARNING, "Broadcast: Propagating registration of agent " + aid.getName() + " topic " + topic.getLocalName() + " to slice " + sliceName);
 				slice.register(aid, topic);
 			}
 			catch (Throwable t)
@@ -437,7 +420,6 @@ public class TopicManagementService extends BaseService {
 				myLogger.log(Logger.WARNING, "Error propagating topic registration to slice  " + sliceName, t);
 			}
 		}
-		//myLogger.log(Logger.WARNING, "END: Registering agent "+aid.getName()+" to topic "+topic.getLocalName());
 	}
 	
 	private void broadcastDeregistration(AID aid, AID topic, Service.Slice[] slices) throws ServiceException {
