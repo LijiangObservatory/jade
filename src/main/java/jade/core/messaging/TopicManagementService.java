@@ -31,6 +31,7 @@ import jade.core.management.AgentManagementSlice;
 import jade.lang.acl.ACLMessage;
 import jade.util.Logger;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -379,13 +380,24 @@ public class TopicManagementService extends BaseService {
 		}
 		
 		public void register(AID topic) throws ServiceException {
-			Service.Slice[] slices = getAllSlices();
-			broadcastRegistration(aid, topic, slices);
+			registerCommon(aid, topic);
 		}
 		
 		public void register(AID id, AID topic) throws ServiceException {
+			registerCommon(id, topic);
+		}
+
+		private void registerCommon(AID id, AID topic) throws ServiceException {
 			Service.Slice[] slices = getAllSlices();
 			broadcastRegistration(id, topic, slices);
+			// The above can take a while. Check a new container has not been added while we were running.
+			List<Service.Slice> updatedSlices = Arrays.asList(getAllSlices());
+			updatedSlices.removeAll(Arrays.asList(slices));
+			if (updatedSlices.size() > 0)
+			{
+				myLogger.log(Logger.WARNING, "Register new topic: Second pass: " + topic.getLocalName() + " " + updatedSlices.size() + " slices to handle.");
+				broadcastRegistration(id, topic, updatedSlices.toArray(new Service.Slice[0]));
+			}
 		}
 		
 		public void deregister(AID topic) throws ServiceException {
