@@ -4,7 +4,7 @@
   <groupId>com.tilab.jade</groupId>
   <artifactId>jade</artifactId>
   <packaging>jar</packaging>
-  <version>4.5.1-4</version>
+  <version>4.5.1-4-SNAPSHOT</version>
   <name>jade</name>
   <url>http://jade.tilab.com/</url>
   <scm>
