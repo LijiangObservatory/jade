@@ -126,7 +126,7 @@ class NodeStub extends Stub implements Node {
 		else {
 			cmd = new Command(Command.PING_NODE_NONBLOCKING, remoteID, true);
 		}
-		cmd.addParam(new Boolean(hang));
+		cmd.addParam(hang);
 		
 		try {
 			if (myLogger.isLoggable(Logger.FINE)) {
@@ -138,9 +138,9 @@ class NodeStub extends Stub implements Node {
 			
 			Boolean b = (Boolean)result.getParamAt(0);
 			if (myLogger.isLoggable(Logger.FINE)) {
-				myLogger.log(Logger.FINE, "Ping to remote node "+name+" returned: "+b.booleanValue());
+				myLogger.log(Logger.FINE, "Ping to remote node "+name+" returned: "+ b);
 			}
-			return b.booleanValue();
+			return b;
 		}
 		catch (DispatcherException de) {
 			throw new IMTPException(DISP_ERROR_MSG, de);
@@ -200,5 +200,19 @@ class NodeStub extends Stub implements Node {
 	public String toString() {
 		String address = (remoteTAs != null && remoteTAs.size() > 0 ? remoteTAs.get(0) : "null").toString();
 		return "["+name+", "+remoteID+", "+address+"]";
+	}
+
+	@Override
+	public boolean equals(Object obj)
+	{
+		if (obj instanceof  NodeStub)
+		{
+			if ((remoteTAs == null) && ((NodeStub) obj).remoteTAs != null) return false;
+			return name.equals(((NodeStub) obj).getName()) &&
+					remoteID == ((NodeStub) obj).remoteID &&
+					((remoteTAs == null && ((NodeStub) obj).remoteTAs == null) ||
+							(remoteTAs.equals(((NodeStub) obj).remoteTAs)));
+		}
+		return false;
 	}
 }
