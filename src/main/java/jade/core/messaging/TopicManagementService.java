@@ -393,10 +393,11 @@ public class TopicManagementService extends BaseService {
 			// The above can take a while. Check a new container has not been added while we were running.
 			List<Service.Slice> updatedSlices = Arrays.asList(getAllSlices());
 			updatedSlices.removeAll(Arrays.asList(slices));
+			myLogger.log(Logger.WARNING, "Slice type is " + updatedSlices.get(0).toString());
 			if (updatedSlices.size() > 0)
 			{
 				myLogger.log(Logger.WARNING, "Register new topic: Second pass: " + topic.getLocalName() + " " + updatedSlices.size() + " slices to handle.");
-				broadcastRegistration(id, topic, updatedSlices.toArray(new Service.Slice[0]));
+				//broadcastRegistration(id, topic, updatedSlices.toArray(new Service.Slice[0]));
 			}
 		}
 		
