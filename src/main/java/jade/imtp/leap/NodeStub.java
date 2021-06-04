@@ -211,7 +211,7 @@ class NodeStub extends Stub implements Node {
 			return name.equals(((NodeStub) obj).getName()) &&
 					remoteID == ((NodeStub) obj).remoteID &&
 					((remoteTAs == null && ((NodeStub) obj).remoteTAs == null) ||
-							(remoteTAs.equals(((NodeStub) obj).remoteTAs)));
+							(remoteTAs.toList().equals(((NodeStub) obj).remoteTAs.toList())));
 		}
 		return false;
 	}
