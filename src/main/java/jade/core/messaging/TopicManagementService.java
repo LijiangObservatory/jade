@@ -31,6 +31,7 @@ import jade.core.management.AgentManagementSlice;
 import jade.lang.acl.ACLMessage;
 import jade.util.Logger;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -391,7 +392,8 @@ public class TopicManagementService extends BaseService {
 			Service.Slice[] slices = getAllSlices();
 			broadcastRegistration(id, topic, slices);
 			// The above can take a while. Check a new container has not been added while we were running.
-			List<Service.Slice> updatedSlices = Arrays.asList(getAllSlices());
+			// NOTE: the list returned by asList does not support remove operation.
+			List<Service.Slice> updatedSlices = new ArrayList<>(Arrays.asList(getAllSlices()));
 			updatedSlices.removeAll(Arrays.asList(slices));
 			if (updatedSlices.size() > 0)
 			{
