@@ -30,7 +30,7 @@ import jade.core.messaging.DeliveryTracing;
 import jade.util.Logger;
 
 /**
- This calss implements a stub to a remote LEAP Node.
+ This class implements a stub to a remote LEAP Node.
  @author Giovanni Caire - TILAB
  @author Giovanni Rimassa - FRAMeTech s.r.l
  */
