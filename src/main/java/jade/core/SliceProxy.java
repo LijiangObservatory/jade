@@ -91,7 +91,18 @@ public class SliceProxy implements Service.Slice
 		{
 			try
 			{
-				return myNode.equals(((SliceProxy) obj).getNode()) && myService.equals(((SliceProxy) obj).getService());
+				if ((myNode == null && ((SliceProxy) obj).getNode() != null) ||
+						(myService == null && ((SliceProxy) obj).getService() != null))
+				{
+					return false;
+				}
+				else
+				{
+					return ((myNode == null && ((SliceProxy) obj).getNode() == null) ||
+							(myNode.equals(((SliceProxy) obj).getNode()))) &&
+							((myService == null && ((SliceProxy) obj).getService() == null) ||
+									(myService.equals(((SliceProxy) obj).getService())));
+				}
 			}
 			catch (ServiceException e)
 			{
