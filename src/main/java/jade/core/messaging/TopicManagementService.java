@@ -390,6 +390,7 @@ public class TopicManagementService extends BaseService {
 
 		private void registerCommon(AID id, AID topic) throws ServiceException {
 			Service.Slice[] slices = getAllSlices();
+			myLogger.log(Logger.WARNING, "Register new topic: First pass: " + topic.getLocalName() + " " + slices.length + " slices to handle.");
 			broadcastRegistration(id, topic, slices);
 			// The above can take a while. Check a new container has not been added while we were running.
 			// NOTE: the list returned by asList does not support remove operation.
