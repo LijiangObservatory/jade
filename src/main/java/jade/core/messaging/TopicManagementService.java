@@ -31,6 +31,8 @@ import jade.core.management.AgentManagementSlice;
 import jade.lang.acl.ACLMessage;
 import jade.util.Logger;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
@@ -139,20 +141,19 @@ public class TopicManagementService extends BaseService {
 						myLogger.log(Logger.FINE, "Handling message about topic "+ receiver.getLocalName());
 					}
 					ACLMessage msg = gMsg.getACLMessage();
-					Collection interestedAgents = topicTable.getInterestedAgents(receiver);
+					Collection<AID> interestedAgents = topicTable.getInterestedAgents(receiver);
 					if (interestedAgents.size() > 0) {
 						// Forward the message to all agents interested in that topic.
 						// Note that if no agents are currently listening to this topic, the message is simply swallowed
 						msg.addUserDefinedParameter(ACLMessage.IGNORE_FAILURE, "true");
 						gMsg.setModifiable(false);
-						for (Object interestedAgent : interestedAgents)
+						for (AID interestedAgent : interestedAgents)
 						{
-							AID target = (AID) interestedAgent;
 							if (myLogger.isLoggable(Logger.FINE))
 							{
-								myLogger.log(Logger.FINE, "Forwarding message to agent " + target.getName());
+								myLogger.log(Logger.FINE, "Forwarding message to agent " + interestedAgent.getName());
 							}
-							sendMessage(sender, gMsg, target);
+							sendMessage(sender, gMsg, interestedAgent);
 						}
 					}
 					else
@@ -165,7 +166,7 @@ public class TopicManagementService extends BaseService {
 			}
 			else if (name.equals(AgentManagementSlice.SHUTDOWN_PLATFORM)) {
 				// Platform is shutting down. Avoid propagating information to remote slices
-				myLogger.log(Logger.INFO, "TopicManagentService: platform shutdown process initiation detected");
+				myLogger.log(Logger.INFO, "TopicManagementService: platform shutdown process initiation detected");
 				shutdownInProgress = true;
 			}
 			// Never veto other commands
@@ -207,7 +208,7 @@ public class TopicManagementService extends BaseService {
 			else {
 				if (name.equals(Service.REATTACHED)) {
 					// The Main lost all information related to this container --> Notify it again
-					handleReattached(cmd);
+					handleReattached();
 				}
 			}
 			// Never veto a Command
@@ -226,13 +227,13 @@ public class TopicManagementService extends BaseService {
 		if (!shutdownInProgress) {
 			Object[] params = cmd.getParams();
 			AID aid = (AID) params[0];
-			List topics = topicTable.getRelevantTopics(aid);
+			List<AID> topics = topicTable.getRelevantTopics(aid);
 			if (topics.size() > 0) {
 				try {
 					Service.Slice[] slices = getAllSlices();
-					for (Object topic : topics)
+					for (AID topic : topics)
 					{
-						broadcastDeregistration(aid, (AID) topic, slices);
+						broadcastDeRegistration(aid, topic, slices);
 					}
 				}
 				catch (Throwable t) {
@@ -278,7 +279,7 @@ public class TopicManagementService extends BaseService {
 	/**
 	 * The Main lost all information about the local node --> Notify the Main slice about all local registrations
 	 */
-	private void handleReattached(VerticalCommand cmd) {
+	private void handleReattached() {
 		try {
 			// Be sure to get a fresh slice --> Bypass the service cache
 			TopicManagementSlice newSlice = (TopicManagementSlice) getFreshSlice(MAIN_SLICE);
@@ -340,7 +341,7 @@ public class TopicManagementService extends BaseService {
 					AID aid = (AID) params[0];
 					AID topic = (AID) params[1];
 					if (myLogger.isLoggable(Logger.FINE)) {
-						myLogger.log(Logger.FINE, "Received deregistration of agent "+aid.getName()+" from topic "+topic.getLocalName());
+						myLogger.log(Logger.FINE, "Received de-registration of agent "+aid.getName()+" from topic "+topic.getLocalName());
 					}					
 					deregister(aid, topic);
 				}
@@ -379,23 +380,35 @@ public class TopicManagementService extends BaseService {
 		}
 		
 		public void register(AID topic) throws ServiceException {
-			Service.Slice[] slices = getAllSlices();
-			broadcastRegistration(aid, topic, slices);
+			registerCommon(aid, topic);
 		}
 		
 		public void register(AID id, AID topic) throws ServiceException {
+			registerCommon(id, topic);
+		}
+
+		private void registerCommon(AID id, AID topic) throws ServiceException {
 			Service.Slice[] slices = getAllSlices();
 			broadcastRegistration(id, topic, slices);
+			// The above can take a while. Check a new container has not been added while we were running.
+			// NOTE: the list returned by asList does not support remove operation.
+			List<Service.Slice> updatedSlices = new ArrayList<>(Arrays.asList(getAllSlices()));
+			updatedSlices.removeAll(Arrays.asList(slices));
+			if (updatedSlices.size() > 0)
+			{
+				myLogger.log(Logger.WARNING, "Register new topic: Second pass: " + topic.getLocalName() + " " + updatedSlices.size() + " slices to handle.");
+				broadcastRegistration(id, topic, updatedSlices.toArray(new Service.Slice[0]));
+			}
 		}
 		
 		public void deregister(AID topic) throws ServiceException {
 			Service.Slice[] slices = getAllSlices();
-			broadcastDeregistration(aid, topic, slices);
+			broadcastDeRegistration(aid, topic, slices);
 		}
 		
 		public void deregister(AID id, AID topic) throws ServiceException {
 			Service.Slice[] slices = getAllSlices();
-			broadcastDeregistration(id, topic, slices);
+			broadcastDeRegistration(id, topic, slices);
 		}
 	}  // END of inner class TopicHelperImpl
 	
@@ -421,9 +434,9 @@ public class TopicManagementService extends BaseService {
 		}
 	}
 	
-	private void broadcastDeregistration(AID aid, AID topic, Service.Slice[] slices) throws ServiceException {
+	private void broadcastDeRegistration(AID aid, AID topic, Service.Slice[] slices) throws ServiceException {
 		if (myLogger.isLoggable(Logger.CONFIG)) {
-			myLogger.log(Logger.CONFIG, "Deregistering agent "+aid.getName()+" from topic "+topic.getLocalName());
+			myLogger.log(Logger.CONFIG, "De-registering agent "+aid.getName()+" from topic "+topic.getLocalName());
 		}
 		for (Slice value : slices)
 		{
@@ -434,7 +447,7 @@ public class TopicManagementService extends BaseService {
 				sliceName = slice.getNode().getName();
 				if (myLogger.isLoggable(Logger.FINER))
 				{
-					myLogger.log(Logger.FINER, "Propagating deregistration of agent " + aid.getName() + " to slice " + sliceName);
+					myLogger.log(Logger.FINER, "Propagating de-registration of agent " + aid.getName() + " to slice " + sliceName);
 				}
 				slice.deregister(aid, topic);
 			}

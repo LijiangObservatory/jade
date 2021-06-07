@@ -53,7 +53,7 @@ class Stub implements jade.util.leap.Serializable {
 	protected static final String DISP_ERROR_MSG = "Dispatcher error";
 	
 	// The addresses of the remote object
-	protected List              remoteTAs = new ArrayList();
+	protected ArrayList              remoteTAs = new ArrayList();
 	
 	// The ID of the remote object
 	protected int               remoteID;
@@ -133,7 +133,7 @@ class Stub implements jade.util.leap.Serializable {
 			// Print a notification and throw IMTPException
 			myLogger.log(Logger.WARNING, "EXCEPTION in remote container: "+exceptionName);
 			throw new IMTPException(exceptionName+" occurred in remote container ["
-					+(String) result.getParamAt(1)+"]");
+					+ result.getParamAt(1) +"]");
 		} 
 		else if (result.getCode() != Command.OK) {
 			throw new IMTPException("Unknown code in result command");

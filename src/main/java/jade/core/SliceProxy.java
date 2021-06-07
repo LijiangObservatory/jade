@@ -82,6 +82,34 @@ public class SliceProxy implements Service.Slice
 	
 	private Node myNode;
 	private transient NodeDescriptor localNodeDescriptor;
-	private transient Service myService;
+	private final transient Service myService;
+
+	@Override
+	public boolean equals(Object obj)
+	{
+		if (obj instanceof SliceProxy)
+		{
+			try
+			{
+				if ((myNode == null && ((SliceProxy) obj).getNode() != null) ||
+						(myService == null && ((SliceProxy) obj).getService() != null))
+				{
+					return false;
+				}
+				else
+				{
+					return ((myNode == null && ((SliceProxy) obj).getNode() == null) ||
+							(myNode.equals(((SliceProxy) obj).getNode()))) &&
+							((myService == null && ((SliceProxy) obj).getService() == null) ||
+									(myService.equals(((SliceProxy) obj).getService())));
+				}
+			}
+			catch (ServiceException e)
+			{
+				return false;
+			}
+		}
+		return false;
+	}
 
 }
