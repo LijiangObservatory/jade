@@ -4,7 +4,7 @@
   <groupId>com.tilab.jade</groupId>
   <artifactId>jade</artifactId>
   <packaging>jar</packaging>
-  <version>4.5.1-5</version>
+  <version>4.5.1-6</version>
   <name>jade</name>
   <url>http://jade.tilab.com/</url>
   <scm>
@@ -13,7 +13,7 @@
   <parent>
     <groupId>org.lcogt</groupId>
     <artifactId>lcogt-pom</artifactId>
-    <version>1.0.0</version>
+    <version>1.1.0</version>
   </parent>
   <dependencies>
     <dependency>
@@ -21,6 +21,20 @@
       <artifactId>commons-codec</artifactId>
       <version>1.15</version>
     </dependency>
+
+    <!-- corba removed in Java 11 -->
+    <dependency>
+      <groupId>org.glassfish.corba</groupId>
+      <artifactId>glassfish-corba-omgapi</artifactId>
+      <version>4.2.4</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.glassfish.corba</groupId>
+      <artifactId>glassfish-corba-orb</artifactId>
+      <version>4.2.4</version>
+    </dependency>
+
   </dependencies>
   <!-- Compiler configuration. There are images in the src directory that
      must be included as resources. -->
@@ -33,6 +47,14 @@
       </resource>
     </resources>
     <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <source>17</source>
+          <target>17</target>
+        </configuration>
+      </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
