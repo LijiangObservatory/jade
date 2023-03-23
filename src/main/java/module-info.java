@@ -14,6 +14,7 @@ module jade {
     exports jade.domain.FIPAAgentManagement;
     exports jade.domain.introspection;
     exports jade.domain.JADEAgentManagement;
+    exports jade.util;
     exports jade.util.leap;
     exports jade.wrapper;
     exports jade.wrapper.gateway;
