@@ -3,7 +3,9 @@
 @Library('lco-shared-libs@0.0.15') _
 
 pipeline {
-	agent any
+	agent {
+	    label 'centos7-java17'
+	}
 	stages {
 		stage('Build') {
 			steps {
