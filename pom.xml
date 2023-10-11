@@ -78,32 +78,6 @@
           </archive>
         </configuration>
       </plugin>
-      <plugin>
-        <groupId>com.google.cloud.tools</groupId>
-        <artifactId>jib-maven-plugin</artifactId>
-        <executions>
-          <execution>
-            <phase>deploy</phase>
-            <goals>
-              <goal>build</goal>
-            </goals>
-          </execution>
-        </executions>
-        <configuration>
-          <!-- The cert used by LCO for the Docker registry isn't in Java -->
-          <allowInsecureRegistries>true</allowInsecureRegistries>
-          <to>
-            <image>docker.lco.global/jade-platform-node</image>
-            <tags>${git.commit.id.describe}</tags>
-          </to>
-          <from>
-            <image>gcr.io/distroless/java:8</image>
-          </from>
-          <container>
-            <mainClass>jade.Boot</mainClass>
-          </container>
-        </configuration>
-      </plugin>
     </plugins>
   </build>
 </project>
